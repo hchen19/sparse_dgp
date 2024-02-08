@@ -12,7 +12,7 @@ from torch.optim.lr_scheduler import StepLR, CosineAnnealingLR
 from torch.utils.tensorboard import SummaryWriter
 import numpy as np
 
-import models.bayesian.simple_fc_variational as simple_bnn
+import models.simple_fc_variational as simple_bnn
 from dataset.dataset import Dataset
 import matplotlib.pyplot as plt
 

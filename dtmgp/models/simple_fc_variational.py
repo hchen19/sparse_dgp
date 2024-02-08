@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from layers.variational_layers.linear_variational import LinearReparameterization
+from layers.linear_variational import LinearReparameterization
 
 prior_mu = 0.0
 prior_sigma = 1.0
