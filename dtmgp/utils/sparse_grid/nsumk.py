@@ -3,7 +3,7 @@ import torch
 
 
 def n_sum_k(n, k):
-    r"""
+    """
     ------------------------
     Parameters:
     n: # of positive integer
