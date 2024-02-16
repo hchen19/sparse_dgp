@@ -45,7 +45,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import Module, Parameter
-from layers.base_variational_layer import BaseVariationalLayer_
+from dtmgp.layers.base_variational_layer import BaseVariationalLayer_
+
 import math
 from torch.quantization.observer import HistogramObserver, PerChannelMinMaxObserver, MinMaxObserver
 from torch.quantization.qconfig import QConfig
