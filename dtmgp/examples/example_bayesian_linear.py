@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 
 
 class BNN:
-    def __init__(self, input_dim, output_dim=1, num_monte_carlo=10, batch_size=128, lr=1.0, gamma=0.999, activation=F.relu, inverse_y=False, seed=1,):
+    def __init__(self, input_dim, output_dim=1, num_monte_carlo=10, batch_size=128, lr=1.0, gamma=0.999, activation=F.relu, inverse_y=False, seed=1, use_cuda=True):
         
         torch.manual_seed(seed)
 
@@ -30,8 +30,13 @@ class BNN:
         self.num_monte_carlo = num_monte_carlo
 
         self.activation = activation
-        self.model = simple_bnn.SFC(input_dim, output_dim, self.activation)
+        self.use_cuda = use_cuda
 
+        self.model = simple_bnn.SFC(input_dim, output_dim, self.activation)
+        if torch.cuda.is_available() and self.use_cuda:
+            self.model.cuda()
+        else:
+            self.model.cpu()
 
         self.reset_optimizer_scheduler() # do not delete this
 
@@ -100,6 +105,11 @@ class BNN:
         self.model.eval()
 
         data = torch.tensor(X).float()
+        if torch.cuda.is_available() and self.use_cuda:
+            data = data.cuda()
+        else:
+            data = data.cpu()
+
         num_monte_carlo = self.num_monte_carlo if avg is None else 1 # if none (default) we return average else return once result
         predicts = []
         with torch.no_grad():
@@ -164,6 +174,13 @@ class BNN:
         losses = []
         self.model.train()
         for batch_idx, (data, target) in enumerate(train_loader):
+            if torch.cuda.is_available() and self.use_cuda:
+                target = target.cuda()
+                data = data.cuda()
+            else:
+                target = target.cpu()
+                data = data.cpu()
+
             self.optimizer.zero_grad()
             output_ = []
             kl_ = []
@@ -192,6 +209,13 @@ class BNN:
         test_loss = 0
         with torch.no_grad():
             for data, target in test_loader:
+                if torch.cuda.is_available() and self.use_cuda:
+                    target = target.cuda()
+                    data = data.cuda()
+                else:
+                    target = target.cpu()
+                    data = data.cpu()
+
                 output, kl = self.model(data)
                 test_loss += F.mse_loss(output, target, reduction='sum').item() + (
                     kl / self.batch_size)  # sum up batch loss
@@ -206,6 +230,13 @@ class BNN:
         
         with torch.no_grad():
             for data, target in test_loader:
+                if torch.cuda.is_available() and self.use_cuda:
+                    target = target.cuda()
+                    data = data.cuda()
+                else:
+                    target = target.cpu()
+                    data = data.cpu()
+
                 predicts = []
                 for mc_run in range(self.num_monte_carlo):
                     self.model.eval()
@@ -305,6 +336,13 @@ def main():
         'use tensorboard for logging and visualization of training progress')
 
     args = parser.parse_args()
+    if torch.cuda.is_available() and not args.no_cuda:
+        use_cuda = True
+        print("Using CUDA")
+    else:
+        use_cuda = False
+        print("Using CPU")
+
     torch.manual_seed(args.seed)
 
     ############################################################################################################
@@ -323,7 +361,7 @@ def main():
         os.makedirs(args.save_dir)
 
     ############################################################################################################
-    bnn = BNN(input_dim=inputs.shape[-1],batch_size=args.batch_size, lr=args.lr, gamma=args.gamma)
+    bnn = BNN(input_dim=inputs.shape[-1],batch_size=args.batch_size, lr=args.lr, gamma=args.gamma, use_cuda=use_cuda)
 
     print(args.mode)
     if args.mode == 'train':
