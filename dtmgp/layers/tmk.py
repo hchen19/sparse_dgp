@@ -10,35 +10,28 @@ import torch.nn.functional as F
 
 
 class TMK(nn.Module):
-    def __init__(self, kernel, sparse_grid, chol_inv) -> None:
+    def __init__(self,):
         """
-        ------------------------
-        Parameters:
-        kernel: tensor markov kernel
-        sparse_grid: sparse grid points X^{SG} of dyadic sort, is [m,d] size tensor
-        chol_inv: inverse of Cholesky decomposition of kernel(sparse_grid,sparse_grid),
-                stored in torch.sparse_coo_tensor format, [m,m] size tensor
+        Implements tensor markov kernel as an activation 
         """
         super().__init__()
-        self.kernel = kernel
-        self.sparse_grid = sparse_grid
-        self.chol_inv = chol_inv
         
     
-    def forward(self, input):
+    def forward(self, input, kernel, sparse_grid, chol_inv):
         """
         ------------------------
         Parameters:
         input: [n,d] size tensor, n is the number of the input, d is the dimension of the input
+        sparse_grid: [m,d] size tensor, sparse grid points X^{SG} of dyadic sort
+        chol_inv: [m,m] size tensor, inverse of Cholesky decomposition of kernel(sparse_grid,sparse_grid),
+                stored in torch.sparse_coo_tensor format
 
         ------------------------
         Returns:
-        phi: kernel(input, sparse_grid) @ chol_inv
+        out: kernel(input, sparse_grid) @ chol_inv
         """
-        kernel = self.kernel
-        sparse_grid = self.sparse_grid
-        chol_inv = self.chol_inv # [m,m] size tensor in torch.sparse_coo_tensor format
-
+        
         k_star = kernel(input, sparse_grid) # [n,m] size tenosr
-        phi = k_star @ chol_inv # [n,m] size tensor
-        return phi
+        out = k_star @ chol_inv # [n,m] size tensor
+
+        return out

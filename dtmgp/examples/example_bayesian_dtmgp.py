@@ -12,13 +12,14 @@ from torch.optim.lr_scheduler import StepLR, CosineAnnealingLR
 from torch.utils.tensorboard import SummaryWriter
 import numpy as np
 
-import dtmgp.models.simple_fc_variational as simple_bnn
+import dtmgp.models.simple_tmk_variational as simple_tmk
 from dataset.dataset import Dataset
 import matplotlib.pyplot as plt
 
 
-class BNN:
-    def __init__(self, input_dim, output_dim=1, 
+class DTMGP:
+    def __init__(self, input_dim, output_dim, 
+                 kernel, sparse_grid, chol_inv,
                  num_monte_carlo=10, batch_size=128, 
                  lr=1.0, 
                  gamma=0.999, 
@@ -40,7 +41,8 @@ class BNN:
         self.activation = activation
         self.use_cuda = use_cuda
 
-        self.model = simple_bnn.SFC(input_dim, output_dim, self.activation)
+        self.model = simple_tmk.TMK(input_dim, output_dim, kernel, sparse_grid, chol_inv)
+
         if torch.cuda.is_available() and self.use_cuda:
             self.model.cuda()
         else:
@@ -87,7 +89,7 @@ class BNN:
         self.scheduler.step()
 
         return self
-
+    
     def predict(self, X, return_std=False, avg=None, inverse_y=False):
         """Predict using the model
 
@@ -140,44 +142,7 @@ class BNN:
             return y_mean, y_std
         else:
             return y_mean
-    
-    def sample_y(self, X, n_samples=1, random_state=0):
-        """Draw samples from Gaussian process and evaluate at X.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features) or list of object
-            Query points where the GP is evaluated.
-
-        n_samples : int, default=1
-            The number of samples drawn from the Gaussian process
-
-        random_state : int, RandomState instance or None, default=0
-            Determines random number generation to randomly draw samples.
-            Pass an int for reproducible results across multiple function
-            calls.
-            See :term: `Glossary <random_state>`.
-
-        Returns
-        -------
-        y_samples : ndarray of shape (n_samples_X, [n_output_dims], n_samples)
-            Values of n_samples samples drawn from Gaussian process and
-            evaluated at query points.
-        """
-        pass 
-        # rng = check_random_state(random_state)
-
-        # y_mean, y_std = self.predict(X, return_std=True)
-        # if y_mean.ndim == 1:
-        #     y_samples = rng.multivariate_normal(y_mean, y_cov, n_samples).T
-        # else:
-        #     y_samples = \
-        #         [rng.multivariate_normal(y_mean[:, i], y_cov,
-        #                                  n_samples).T[:, np.newaxis]
-        #          for i in range(y_mean.shape[1])]
-        #     y_samples = np.hstack(y_samples)
-        # return y_samples
-
+        
     def train(self, train_loader):
         losses = []
         self.model.train()
@@ -275,7 +240,7 @@ def import_data(file):
 
 def main():
     # Training settings
-    parser = argparse.ArgumentParser(description='PyTorch simple_bnn Example')
+    parser = argparse.ArgumentParser(description='PyTorch simple DTMGP Example')
     parser.add_argument('--inputdim',
                         type=int,
                         default=7,
@@ -342,6 +307,7 @@ def main():
         metavar='N',
         help=
         'use tensorboard for logging and visualization of training progress')
+    
 
     args = parser.parse_args()
     if torch.cuda.is_available() and not args.no_cuda:
@@ -369,7 +335,7 @@ def main():
         os.makedirs(args.save_dir)
 
     ############################################################################################################
-    bnn = BNN(input_dim=inputs.shape[-1],batch_size=args.batch_size, lr=args.lr, gamma=args.gamma, use_cuda=use_cuda)
+    bnn = DTMGP(input_dim=inputs.shape[-1],batch_size=args.batch_size, lr=args.lr, gamma=args.gamma, use_cuda=use_cuda)
 
     print(args.mode)
     if args.mode == 'train':
@@ -381,14 +347,14 @@ def main():
             bnn.test(test_loader)
             losses+=loss
             if epoch % 10 == 0:        
-                torch.save(bnn.model.state_dict(), args.save_dir + "/simple_bnn_bayesian_scnn.pth")
+                torch.save(bnn.model.state_dict(), args.save_dir + "/simple_dtmgp_bayesian_fc.pth")
 
         plt.plot(losses)
         plt.ylim(0, 10)
-        plt.savefig("figures/result_bnn_training_test.png", format = 'png', dpi=300)
+        plt.savefig("figures/result_dtmgp_training_test.png", format = 'png', dpi=300)
 
     elif args.mode == 'test':
-        checkpoint = args.save_dir + '/simple_bnn_bayesian_scnn.pth'
+        checkpoint = args.save_dir + '/simple_dtmgp_bayesian_fc.pth'
         bnn.model.load_state_dict(torch.load(checkpoint))
         bnn.evaluate(train_loader)
         bnn.evaluate(test_loader)
