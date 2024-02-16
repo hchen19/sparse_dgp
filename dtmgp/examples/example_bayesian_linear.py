@@ -381,14 +381,14 @@ def main():
             bnn.test(test_loader)
             losses+=loss
             if epoch % 10 == 0:        
-                torch.save(bnn.model.state_dict(), args.save_dir + "/simple_bnn_bayesian_scnn.pth")
+                torch.save(bnn.model.state_dict(), args.save_dir + "/simple_bnn_bayesian_fc.pth")
 
         plt.plot(losses)
         plt.ylim(0, 10)
         plt.savefig("figures/result_bnn_training_test.png", format = 'png', dpi=300)
 
     elif args.mode == 'test':
-        checkpoint = args.save_dir + '/simple_bnn_bayesian_scnn.pth'
+        checkpoint = args.save_dir + '/simple_bnn_bayesian_fc.pth'
         bnn.model.load_state_dict(torch.load(checkpoint))
         bnn.evaluate(train_loader)
         bnn.evaluate(test_loader)
