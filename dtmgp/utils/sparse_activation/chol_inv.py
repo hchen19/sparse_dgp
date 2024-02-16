@@ -5,9 +5,9 @@ import scipy.sparse as sp
 
 import torch
 from torch import Tensor
-from dtmgp.kernels.laplace_kernel import LaplaceProductKernel
-from dtmgp.utils.sparse_grid.nsumk import n_sum_k
-from dtmgp.utils.operators.torch_scipy_sptransfer import scipy_coo_to_torch_coo, torch_coo_to_scipy_coo
+from ...kernels.laplace_kernel import LaplaceProductKernel
+from ..sparse_grid.nsumk import n_sum_k
+from ..operators.torch_scipy_sptransfer import scipy_coo_to_torch_coo, torch_coo_to_scipy_coo
 
 # one-dimension
 def mk_chol_inv(dyadic_design, 
