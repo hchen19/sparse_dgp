@@ -29,7 +29,7 @@ class SparseGridDesign:
             self.input_bd = [[0,1]]*d
             #self.input_bd = torch.tensor([[0,1]]*d, dtype=torch.float32)
     
-    def gen_sg(self, dyadic_sort=True, indices_sort=True):
+    def gen_sg(self,dyadic_sort=True, return_neighbors=True):
         d = self.d
         eta = self.eta
         design_class = self.design_class
@@ -47,8 +47,8 @@ class SparseGridDesign:
         indices_prt_set = {}
 
         ii = 0
-
         t_sum_start = max(d, eta-d+1)
+        
         for t_sum in range(t_sum_start, eta+1):
             
             t_arrows = n_sum_k(d,t_sum) # [n_prt, d] size tensor
@@ -60,7 +60,7 @@ class SparseGridDesign:
                 indices_fg = [0]*d # sparse grid points, d-dimensional list
                 
                 for dim in range(d): # loop over dimension
-                    design_fun = design_class(dyadic_sort=dyadic_sort, indices_sort=indices_sort)
+                    design_fun = design_class(dyadic_sort=dyadic_sort, return_neighbors=return_neighbors)
                     design_str = design_fun( t_arrows[prt,dim], input_bd[dim])
                     design_str_fg[dim] = design_str
                     x_fg[dim] = design_str.points
@@ -73,23 +73,27 @@ class SparseGridDesign:
                 indices_prt_sg = torch.cartesian_prod(*indices_fg)
                 indices_prt[t_sum, prt] = indices_fg
                 indices_prt_set[t_sum, prt] = indices_prt_sg
-                indices_tot = torch.vstack(( indices_tot, indices_prt_sg ))
 
                 # points
                 x_prt = torch.cartesian_prod(*x_fg) # [len(t_arrows[prt,:]), d] size tensor
                 pts_prt[t_sum, prt] = x_fg # d-dimensional list
                 pts_prt_set[t_sum, prt] = x_prt # [len(t_arrows[prt,:]), d] size tensor (full grid poitns at each iteration)
-
-                x_tot = torch.vstack(( x_tot, x_prt )) # set of all points including same points
-                id_prt[t_sum, prt] = torch.arange(ii, ii + x_prt.shape[0]) # [ii : ii + n_prt]
-                ii += x_prt.shape[0]
+                
+                if t_sum == eta:
+                    indices_tot = torch.vstack(( indices_tot, indices_prt_sg ))
+                    x_tot = torch.vstack(( x_tot, x_prt )) # set of all points including same points
+                    id_prt[t_sum, prt] = torch.arange(ii, ii + x_prt.shape[0]) # [ii : ii + n_prt]
+                    ii += x_prt.shape[0]
         
         self.pts_tot = x_tot[1:,:]
         self.id_prt = id_prt # use self.pts_tot[ id_x_prt[t_sum, prt], : ] to extract grid points in each smolyak iter
         self.pts_prt = pts_prt # use self.pts_prt[t_sum, prt] to extract a d-dimensional list, each entry is one-dim points forming the sgdesign
         self.pts_prt_set = pts_prt_set # use self.pts_prt_set[t_sum, prt] to extract a [len(t_arrows[prt,:]), d] size tensor
         
-        self.pts_set = torch.unique(self.pts_tot, dim=0)
+        # obtain the set of pts_tot and preserve the order (remove duplicates in pts_tot)
+        pts_tot_items = [tuple(l) for l in self.pts_tot.tolist()]
+        pts_set_list = list(dict.fromkeys(pts_tot_items))
+        self.pts_set = torch.tensor(pts_set_list, dtype=float)
         self.n_pts = self.pts_set.shape[0]
 
         self.design_str_prt = design_str_prt
@@ -97,6 +101,8 @@ class SparseGridDesign:
         self.indices_prt = indices_prt
         self.indices_prt_set = indices_prt_set
         self.indices_tot = indices_tot[1:,:]
-        self.indices_set = torch.unique(self.indices_tot, dim=0)
+        indices_tot_items = [tuple(l) for l in self.indices_tot.tolist()]
+        indices_set_list = list(dict.fromkeys(indices_tot_items))
+        self.indices_set = torch.tensor(indices_set_list, dtype=int)
         
         return self

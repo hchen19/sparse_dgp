@@ -35,6 +35,20 @@ class LaplaceProductKernel(torch.nn.Module):
         """
         lengthscale = self.lengthscale
 
+
+        # Give x1 and x2 a last dimension, if necessary
+        if x1.ndimension() == 1:
+            x1 = x1.unsqueeze(1)
+        if x2 is not None:
+            if x2.ndimension() == 1:
+                x2 = x2.unsqueeze(1)
+            if not x1.size(-1) == x2.size(-1):
+                raise RuntimeError("x1 and x2 must have the same number of dimensions!")
+        
+        if x2 is None:
+            x2 = x1
+        
+
         # lengthscale
         d = x1.shape[-1]
         if lengthscale is None:
@@ -48,19 +62,6 @@ class LaplaceProductKernel(torch.nn.Module):
                 raise RuntimeError("lengthscale and input must have the same dimension")
         lengthscale = lengthscale.reshape(-1)
 
-
-
-        # Give x1 and x2 a last dimension, if necessary
-        if x1.ndimension() == 1:
-            x1 = x1.unsqueeze(1)
-        if x2 is not None:
-            if x2.ndimension() == 1:
-                x2 = x2.unsqueeze(1)
-            if not x1.size(-1) == x2.size(-1):
-                raise RuntimeError("x1 and x2 must have the same number of dimensions!")
-
-        if x2 is None:
-            x2 = x1
         
         adjustment = x1.mean(dim=-2, keepdim=True) # [d] size tensor
         x1_ = (x1 - adjustment).div(lengthscale)
