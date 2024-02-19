@@ -16,6 +16,7 @@ def mk_chol_inv(dyadic_design,
     """
     ------------------------
     Parameters:
+    ------------------------
     dyadic_design: object with dyadic points, dyadic_design.points is [n] size tensor
     markov_kernel: Default = LaplaceProductKernel()
     upper:  flag that indicates whether to return the inverse of a upper or lower triangular matrix
@@ -23,6 +24,7 @@ def mk_chol_inv(dyadic_design,
 
     ------------------------
     Returns:
+    ------------------------
     Rinv: inverse of Cholesky decomposition of markov_kernel(dyadic_points,dyadic_points)
     """
     dyadic_points = dyadic_design.points
@@ -147,8 +149,8 @@ def tmk_chol_inv(sparse_grid_design,
             #Rinv_sg = scipy_coo_to_torch_coo(Rinv_fg_scipy_sparse)
             
             # get indices and vals of Rinv_fg
-            row_Rinv_fg = torch.tensor(Rinv_fg_scipy_sparse.row)
-            col_Rinv_fg = torch.tensor(Rinv_fg_scipy_sparse.col)
+            row_Rinv_fg = torch.tensor(Rinv_fg_scipy_sparse.row, dtype=torch.int64)
+            col_Rinv_fg = torch.tensor(Rinv_fg_scipy_sparse.col, dtype=torch.int64)
             indices_Rinv_fg = torch.vstack((row_Rinv_fg, col_Rinv_fg)) # [2, nnz_fg] size tensor
             vals_Rinv_fg = torch.tensor(Rinv_fg_scipy_sparse.data, dtype=float) # [nnz_fg] size tensor
 
