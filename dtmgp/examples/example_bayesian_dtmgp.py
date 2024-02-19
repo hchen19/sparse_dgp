@@ -2,7 +2,10 @@ from __future__ import print_function
 import os
 import argparse
 import sys
-# sys.path.append("..")
+from pathlib import Path # if you haven't already done so
+file = Path(os.path.dirname(os.path.abspath("__file__"))).resolve()
+parent, root = file.parent, file.parents[1]
+sys.path.append(str(root))
 
 import torch
 import torch.nn as nn
@@ -13,17 +16,19 @@ from torch.utils.tensorboard import SummaryWriter
 import numpy as np
 
 import dtmgp.models.simple_tmk_variational as simple_tmk
+from dtmgp.utils.sparse_activation.design_class import HyperbolicCrossDesign
+from dtmgp.kernels.laplace_kernel import LaplaceProductKernel
 from dataset.dataset import Dataset
 import matplotlib.pyplot as plt
 
 
 class DTMGP:
     def __init__(self, input_dim, output_dim, 
-                 kernel, sparse_grid, chol_inv,
+                 design_class, kernel, 
                  num_monte_carlo=10, batch_size=128, 
                  lr=1.0, 
                  gamma=0.999, 
-                 activation=F.relu, 
+                 activation=None, 
                  inverse_y=False, 
                  seed=1, 
                  use_cuda=True,
@@ -41,7 +46,7 @@ class DTMGP:
         self.activation = activation
         self.use_cuda = use_cuda
 
-        self.model = simple_tmk.TMK(input_dim, output_dim, kernel, sparse_grid, chol_inv)
+        self.model = simple_tmk.SimpleDTMGP(input_dim, output_dim, design_class, kernel)
 
         if torch.cuda.is_available() and self.use_cuda:
             self.model.cuda()
@@ -147,6 +152,7 @@ class DTMGP:
         losses = []
         self.model.train()
         for batch_idx, (data, target) in enumerate(train_loader):
+            print(data.size())
             if torch.cuda.is_available() and self.use_cuda:
                 target = target.cuda()
                 data = data.cuda()
@@ -335,7 +341,11 @@ def main():
         os.makedirs(args.save_dir)
 
     ############################################################################################################
-    bnn = DTMGP(input_dim=inputs.shape[-1],batch_size=args.batch_size, lr=args.lr, gamma=args.gamma, use_cuda=use_cuda)
+    bnn = DTMGP(input_dim=inputs.shape[-1], output_dim=1,
+                design_class=HyperbolicCrossDesign,
+                kernel=LaplaceProductKernel(lengthscale=1.),
+                batch_size=args.batch_size, lr=args.lr, gamma=args.gamma, 
+                use_cuda=use_cuda)
 
     print(args.mode)
     if args.mode == 'train':

@@ -1,7 +1,7 @@
-#!/usr/bin/env python3
 import torch
-from .nsumk import n_sum_k
-from .hyperbolic_cross import HyperbolicCrossDesign
+from dtmgp.utils.operators.chol_inv import n_sum_k
+from dtmgp.utils.sparse_activation.design_class import HyperbolicCrossDesign
+
 
 class SparseGridDesign:
     """

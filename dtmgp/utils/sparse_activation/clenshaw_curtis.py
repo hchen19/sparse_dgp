@@ -1,5 +1,6 @@
 import torch
 
+
 def cc_design(deg, input_bd=[-1,1], dyadic_sort=True):
     """
     ------------------------

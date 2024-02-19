@@ -1,13 +1,36 @@
 from typing import Optional
 
+import itertools
 import math
 import scipy.sparse as sp
 
 import torch
 from torch import Tensor
-from ...kernels.laplace_kernel import LaplaceProductKernel
-from ..sparse_grid.nsumk import n_sum_k
-from ..operators.torch_scipy_sptransfer import scipy_coo_to_torch_coo, torch_coo_to_scipy_coo
+
+from dtmgp.kernels.laplace_kernel import LaplaceProductKernel
+from dtmgp.utils.operators.torch_scipy_sptransfer import torch_coo_to_scipy_coo
+
+
+def n_sum_k(n, k):
+    """
+    ------------------------
+    Parameters:
+    n: # of positive integer
+    k: sum of the integers = k
+
+    ------------------------
+    Returns:
+    a list of all possible combinations of n positive integers adding up to a given number k 
+    """
+    if n == 1:
+        return torch.tensor( [[k]] )
+    else:
+        res = []
+        for i in itertools.product(range(1, k - n + 2), repeat=n):
+            if sum(i) == k:
+                res.append(i)#yield i
+        return torch.tensor( res )
+
 
 # one-dimension
 def mk_chol_inv(dyadic_design, 
