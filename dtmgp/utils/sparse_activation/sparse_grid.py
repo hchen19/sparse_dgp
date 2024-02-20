@@ -68,7 +68,7 @@ class SparseGridDesign:
                     design_str = design_fun( t_arrows[prt,dim], input_bd[dim])
                     design_str_fg[dim] = design_str
                     x_fg[dim] = design_str.points
-                    indices_fg[dim] = (2**(eta-1) * design_str.points - 1).to(dtype=int)
+                    indices_fg[dim] = (2**(eta-d+1) * design_str.points - 1).to(dtype=int)
                 
                 # design structure
                 design_str_prt[t_sum, prt] = design_str_fg
