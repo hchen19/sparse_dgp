@@ -97,7 +97,7 @@ class SparseGridDesign:
         # obtain the set of pts_tot and preserve the order (remove duplicates in pts_tot)
         pts_tot_items = [tuple(l) for l in self.pts_tot.tolist()]
         pts_set_list = list(dict.fromkeys(pts_tot_items))
-        self.pts_set = torch.tensor(pts_set_list, dtype=float)
+        self.pts_set = torch.tensor(pts_set_list, dtype=torch.float32)
         self.n_pts = self.pts_set.shape[0]
 
         self.design_str_prt = design_str_prt

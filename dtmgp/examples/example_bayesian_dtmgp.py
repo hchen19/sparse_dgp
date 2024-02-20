@@ -152,7 +152,7 @@ class DTMGP:
         losses = []
         self.model.train()
         for batch_idx, (data, target) in enumerate(train_loader):
-            print(data.size())
+            
             if torch.cuda.is_available() and self.use_cuda:
                 target = target.cuda()
                 data = data.cuda()

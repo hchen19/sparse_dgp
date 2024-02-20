@@ -177,7 +177,7 @@ def tmk_chol_inv(sparse_grid_design,
             row_Rinv_fg = torch.tensor(Rinv_fg_scipy_sparse.row, dtype=torch.int64)
             col_Rinv_fg = torch.tensor(Rinv_fg_scipy_sparse.col, dtype=torch.int64)
             indices_Rinv_fg = torch.vstack((row_Rinv_fg, col_Rinv_fg)) # [2, nnz_fg] size tensor
-            vals_Rinv_fg = torch.tensor(Rinv_fg_scipy_sparse.data, dtype=float) # [nnz_fg] size tensor
+            vals_Rinv_fg = torch.tensor(Rinv_fg_scipy_sparse.data, dtype=torch.float32) # [nnz_fg] size tensor
 
             # get indices in [n_arrow, d] format for [t_sum, prt]-th loop
             indices_select = sparse_grid_design.indices_prt_set[t_sum, prt]
