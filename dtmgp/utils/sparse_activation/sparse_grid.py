@@ -17,7 +17,7 @@ class SparseGridDesign:
     self: an object with sparse grid design
     """
 
-    def __init__(self, d, eta, 
+    def __init__(self, d, eta=None, 
                  input_bd=None, 
                  design_class=HyperbolicCrossDesign
                  ):
@@ -25,9 +25,13 @@ class SparseGridDesign:
         self.eta = eta
         self.design_class = design_class
         self.input_bd = input_bd
+        if eta is None:
+            eta = d + 2
         if input_bd is None:
             self.input_bd = [[0,1]]*d
             #self.input_bd = torch.tensor([[0,1]]*d, dtype=torch.float32)
+        if d >= eta:
+            raise RuntimeError("level eta should be greater than dimension d")
     
     def gen_sg(self,dyadic_sort=True, return_neighbors=True):
         d = self.d

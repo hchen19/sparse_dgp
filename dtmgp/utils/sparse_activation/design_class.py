@@ -19,7 +19,7 @@ class HyperbolicCrossDesign:
         self.dyadic_sort = dyadic_sort
         self.return_neighbors = return_neighbors
     
-    def __call__(self, deg, input_bd = [0,1]):
+    def __call__(self, deg, input_bd = None):
         """
         ------------------------
         Parameters:
@@ -31,6 +31,9 @@ class HyperbolicCrossDesign:
         pts: [1/(2^deg), 2/(2^deg), 3/(2^deg),..., (2^deg-1)/(2^deg)]
             [2^deg-1] size tensor with hyperbolic cross points (bisection)        
         """
+        if input_bd is None:
+            input_bd = [0,1]
+    
         x_1 = input_bd[0]
         x_n = input_bd[1]
 

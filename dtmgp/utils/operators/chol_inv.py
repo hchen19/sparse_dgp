@@ -15,11 +15,13 @@ def n_sum_k(n, k):
     """
     ------------------------
     Parameters:
+    ------------------------
     n: # of positive integer
     k: sum of the integers = k
 
     ------------------------
     Returns:
+    ------------------------
     a list of all possible combinations of n positive integers adding up to a given number k 
     """
     if n == 1:
