@@ -26,11 +26,10 @@ class SimpleDTMGP(nn.Module):
         ## 1st layer of DGP: input:[n, input_dim] size tensor, output:[n, w1] size tensor
         #################################################################################
         # return [n, m1] size tensor for [n, input_dim] size input and [m1, input_dim] size sparse grid 
-        self.tmk1 = TMK(feature_dim=input_dim, n_level=2, design_class=design_class, kernel=kernel)
-        m1 = self.tmk1.n_points
-
+        self.tmk1 = TMK(feature_dim=input_dim, n_level=3, design_class=design_class, kernel=kernel)
+        m1 = self.tmk1.out_features
+        w1 = 8
         # return [n, w1] size tensor for [n, m1] size input and [m1, w1] size weights
-        w1 = 4#256
         self.fc1 = LinearReparameterization(
             in_features=m1,
             out_features=w1,
@@ -38,18 +37,17 @@ class SimpleDTMGP(nn.Module):
             prior_variance=prior_sigma,
             posterior_mu_init=posterior_mu_init,
             posterior_rho_init=posterior_rho_init,
+            bias=True,
         )
 
         #################################################################################
         ## 2nd layer of DGP: input:[n, w1] size tensor, output:[n, w2] size tensor
         #################################################################################
-        # or return [n, m2] size tensor for [n, w1] size input and [m2, w1] size sparse grid
-        self.tmk2 = TMK(feature_dim=w1, n_level=2, design_class=design_class, kernel=kernel)
-        m2 = self.tmk2.n_points
-
-        
+        # return [n, m2] size tensor for [n, w1] size input and [m2, w1] size sparse grid
+        self.tmk2 = TMK(feature_dim=w1, n_level=3, design_class=design_class, kernel=kernel)
+        m2 = self.tmk2.out_features 
+        w2 = 8
         # return [n, w2] size tensor for [n, m2] size input and [m2, w2] size weights
-        w2 = 8#512
         self.fc2 = LinearReparameterization(
             in_features=m2,
             out_features=w2,
@@ -57,18 +55,17 @@ class SimpleDTMGP(nn.Module):
             prior_variance=prior_sigma,
             posterior_mu_init=posterior_mu_init,
             posterior_rho_init=posterior_rho_init,
+            bias=True,
         )
 
-        
         #################################################################################
         ## 3rd layer of DGP: input:[n, w2] size tensor, output:[n, w3] size tensor
         #################################################################################
         # return [n, m3] size tensor for [n, w2] size input and [m3, w2] size sparse grid
         self.tmk3 = TMK(feature_dim=w2, n_level=2, design_class=design_class, kernel=kernel)
-        m3 = self.tmk3.n_points
-
+        m3 = self.tmk3.out_features
+        w3 = output_dim
         # return [n, w3] size tensor for [n, m3] size input and [m3, w3] size weights
-        w3 = 1
         self.fc3 = LinearReparameterization(
             in_features=m3,
             out_features=w3,
@@ -76,17 +73,8 @@ class SimpleDTMGP(nn.Module):
             prior_variance=prior_sigma,
             posterior_mu_init=posterior_mu_init,
             posterior_rho_init=posterior_rho_init,
+            bias=True,
         )
-
-
-        # self.fc4 = LinearReparameterization(
-        #     in_features=241,
-        #     out_features=output_dim,
-        #     prior_mean=prior_mu,
-        #     prior_variance=prior_sigma,
-        #     posterior_mu_init=posterior_mu_init,
-        #     posterior_rho_init=posterior_rho_init,
-        # )
 
         # self.hidden = LinearReparameterization(
         #     in_features=128,
@@ -119,8 +107,6 @@ class SimpleDTMGP(nn.Module):
         x, kl = self.fc3(x)
         kl_sum += kl
 
-        # x, kl = self.fc4(x)
-        # kl_sum += kl
         if self.activation is None:
             output = x
         else:

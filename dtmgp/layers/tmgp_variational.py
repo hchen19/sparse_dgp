@@ -13,7 +13,7 @@ from dtmgp.utils.operators.chol_inv import mk_chol_inv, tmk_chol_inv
 
 
 class TMK(nn.Module):
-    def __init__(self, feature_dim=10, n_level=2,
+    def __init__(self, feature_dim=8, n_level=2,
                  input_bd=None, design_class=HyperbolicCrossDesign,
                  kernel=LaplaceProductKernel(lengthscale=1.),
                  ):
@@ -21,30 +21,27 @@ class TMK(nn.Module):
         Implements tensor markov kernel as an activation 
         """
         super().__init__()
-        if feature_dim == 1:
+
+        self.kernel = kernel
+
+        if feature_dim == 1: # one-dimension TMGP
             dyadic_design = design_class(dyadic_sort=True, return_neighbors=True)(deg=n_level, input_bd=input_bd)
-            chol_inv = mk_chol_inv(dyadic_design=dyadic_design, 
-                                   markov_kernel = kernel, 
-                                   upper= True)
+            chol_inv = mk_chol_inv(dyadic_design=dyadic_design, markov_kernel = kernel, upper= True)
             design_points = dyadic_design.points.reshape(-1,1)
-        else:
+        else: # multi-dimension TMGP
             eta = int(feature_dim + n_level)
             sg = SparseGridDesign(feature_dim, eta, input_bd=input_bd, design_class=design_class).gen_sg(dyadic_sort=True, return_neighbors=True)
-            chol_inv = tmk_chol_inv(sparse_grid_design=sg, 
-                                    tensor_markov_kernel=kernel, 
-                                    upper = True)
+            chol_inv = tmk_chol_inv(sparse_grid_design=sg, tensor_markov_kernel=kernel, upper = True)
             design_points = sg.pts_set
         
-        
-        self.n_dim = feature_dim
-        self.n_level = n_level
-        self.input_bd = input_bd
-        self.design_class = design_class
-        self.kernel = kernel
+        # self.n_dim = feature_dim
+        # self.n_level = n_level
+        # self.input_bd = input_bd
+        # self.design_class = design_class
         
         self.chol_inv = chol_inv # [n_points, n_points] size tensor
         self.design_points = design_points # [n_points, n_dim] size tensor
-        self.n_points = design_points.shape[0]
+        self.out_features = design_points.shape[0] 
         
     
     def forward(self, input):

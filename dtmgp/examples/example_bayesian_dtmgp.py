@@ -264,7 +264,7 @@ def main():
                         help='input batch size for testing (default: 10000)')
     parser.add_argument('--epochs',
                         type=int,
-                        default=600,
+                        default=100,
                         metavar='N',
                         help='number of epochs to train (default: 14)')
     parser.add_argument('--lr',
