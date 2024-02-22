@@ -16,13 +16,15 @@ class TMK(nn.Module):
     def __init__(self, feature_dim=8, n_level=2,
                  input_bd=None, design_class=HyperbolicCrossDesign,
                  kernel=LaplaceProductKernel(lengthscale=1.),
-                 ):
+                 use_cuda=True,
+    ):
         """
         Implements tensor markov kernel as an activation 
         """
         super().__init__()
 
         self.kernel = kernel
+        self.use_cuda = use_cuda
 
         if feature_dim == 1: # one-dimension TMGP
             dyadic_design = design_class(dyadic_sort=True, return_neighbors=True)(deg=n_level, input_bd=input_bd)
@@ -41,8 +43,7 @@ class TMK(nn.Module):
         
         self.chol_inv = chol_inv # [n_points, n_points] size tensor
         self.design_points = design_points # [n_points, n_dim] size tensor
-        self.out_features = design_points.shape[0] 
-        
+        self.out_features = design_points.shape[0]
     
     def forward(self, input):
         """
