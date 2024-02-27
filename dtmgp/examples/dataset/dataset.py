@@ -56,4 +56,8 @@ if __name__ == '__main__':
     import pickle
     F = open("dataset.pkl", 'rb')
     content=pickle.load(F)
-    print(content)
+
+    cnt = 0
+    for item in content:
+        print('The data ', cnt, ' is : ', item)
+        cnt += 1
