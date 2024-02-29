@@ -23,41 +23,10 @@ class SimpleDTMGP(nn.Module):
         self.activation = activation
 
         #################################################################################
-        ## Linear Transformer
-        #################################################################################
-        self.fc4 = LinearReparameterization(
-            in_features=input_dim,
-            out_features=128,
-            prior_mean=prior_mu,
-            prior_variance=prior_sigma,
-            posterior_mu_init=posterior_mu_init,
-            posterior_rho_init=posterior_rho_init,
-            bias=True,
-        )
-
-        self.fc5 = LinearReparameterization(
-            in_features=128,
-            out_features=128,
-            prior_mean=prior_mu,
-            prior_variance=prior_sigma,
-            posterior_mu_init=posterior_mu_init,
-            posterior_rho_init=posterior_rho_init,
-        )
-
-        self.fc6 = LinearReparameterization(
-            in_features=128,
-            out_features=10,
-            prior_mean=prior_mu,
-            prior_variance=prior_sigma,
-            posterior_mu_init=posterior_mu_init,
-            posterior_rho_init=posterior_rho_init,
-        )
-
-        #################################################################################
         ## 1st layer of DGP: input:[n, input_dim] size tensor, output:[n, w1] size tensor
         #################################################################################
         # return [n, m1] size tensor for [n, input_dim] size input and [m1, input_dim] size sparse grid 
-        self.tmk1 = TMK(feature_dim=10, n_level=3, design_class=design_class, kernel=kernel)
+        self.tmk1 = TMK(feature_dim=input_dim, n_level=3, design_class=design_class, kernel=kernel)
         m1 = self.tmk1.out_features
         w1 = 8
         # return [n, w1] size tensor for [n, m1] size input and [m1, w1] size weights
@@ -107,15 +76,6 @@ class SimpleDTMGP(nn.Module):
             bias=True,
         )
 
-        # self.hidden = LinearReparameterization(
-        #     in_features=128,
-        #     out_features=128,
-        #     prior_mean=prior_mu,
-        #     prior_variance=prior_sigma,
-        #     posterior_mu_init=posterior_mu_init,
-        #     posterior_rho_init=posterior_rho_init,
-        # )
-
         # layers = [self.fc1, TMK()]
         # for i in range(num_hidden_layers):
         #     layers.append(self.hidden)
@@ -125,15 +85,7 @@ class SimpleDTMGP(nn.Module):
 
     def forward(self, x):
         kl_sum = 0
-        
-        x, kl = self.fc4(x)
-        kl_sum += kl
-        x = F.relu(x)
-        x, kl = self.fc5(x)
-        kl_sum += kl
-        x = F.relu(x)
-        x, kl = self.fc6(x)
-        kl_sum += kl
+        x = F.sigmoid(x)
 
         x = self.tmk1(x)
         x, kl = self.fc1(x)

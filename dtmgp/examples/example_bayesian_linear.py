@@ -244,7 +244,7 @@ def main():
             loss = bnn.train(train_loader)
             bnn.scheduler.step()
             bnn.test(test_loader)
-            losses+=loss
+            losses += loss
             if epoch % 10 == 0:        
                 torch.save(bnn.model.state_dict(), args.save_dir + "/simple_bnn_bayesian_fc.pth")
 

@@ -17,6 +17,11 @@ class LaplaceProductKernel(torch.nn.Module):
         super().__init__()
         self.lengthscale = lengthscale
 
+        self.x1 = None
+        self.x2 = None
+        self.d = None
+        self.distance = None
+
     def forward(self, x1: Tensor, x2: Optional[Tensor] = None, 
                 diag: bool = False, **params) -> Tensor:
         """
@@ -33,53 +38,51 @@ class LaplaceProductKernel(torch.nn.Module):
             * 'full_covar`: `n x m`
             * `diag`: `n`
         """
-        lengthscale = self.lengthscale
-
 
         # Give x1 and x2 a last dimension, if necessary
         if x1.ndimension() == 1:
-            x1 = x1.unsqueeze(1)
+            self.x1 = x1.unsqueeze(1)
         if x2 is not None:
             if x2.ndimension() == 1:
-                x2 = x2.unsqueeze(1)
+                self.x2 = x2.unsqueeze(1)
             if not x1.size(-1) == x2.size(-1):
                 raise RuntimeError("x1 and x2 must have the same number of dimensions!")
         
         if x2 is None:
-            x2 = x1
+            self.x2 = self.x1
         
 
         # lengthscale
-        d = x1.shape[-1]
-        if lengthscale is None:
-            lengthscale = torch.ones(d)*d
-        if isinstance(lengthscale, (int, float)):
-            lengthscale *= torch.ones(d)
-        if isinstance(lengthscale, Tensor):
-            if lengthscale.ndimension() == 0 or max(lengthscale.size()) == 1:
-                lengthscale *= torch.ones(d)
-            if not max(lengthscale.size()) == d:
+        d = self.x1.shape[-1]
+        if self.lengthscale is None:
+            self.lengthscale = torch.ones(d)*d
+        if isinstance(self.lengthscale, (int, float)):
+            self.lengthscale *= torch.ones(d)
+        if isinstance(self.lengthscale, Tensor):
+            if self.lengthscale.ndimension() == 0 or max(self.lengthscale.size()) == 1:
+                self.lengthscale *= torch.ones(d)
+            if not max(self.lengthscale.size()) == d:
                 raise RuntimeError("lengthscale and input must have the same dimension")
-        lengthscale = lengthscale.reshape(-1)
+        self.lengthscale = self.lengthscale.reshape(-1)
 
         
-        adjustment = x1.mean(dim=-2, keepdim=True) # [d] size tensor
-        x1_ = (x1 - adjustment).div(lengthscale)
-        x2_ = (x2 - adjustment).div(lengthscale)
+        adjustment = self.x1.mean(dim=-2, keepdim=True) # [d] size tensor
+        x1_ = (self.x1 - adjustment).div(self.lengthscale)
+        x2_ = (self.x2 - adjustment).div(self.lengthscale)
         #distance = self.covar_dist(x1_, x2_, diag=diag, **params)
         x1_eq_x2 = torch.equal(x1_, x2_)
 
         if diag:
             # Special case the diagonal because we can return all zeros most of the time.
             if x1_eq_x2:
-                distance = torch.zeros(*x1_.shape[:-2], x1_.shape[-2], dtype=x1_.dtype)
+                self.distance = torch.zeros(*x1_.shape[:-2], x1_.shape[-2], dtype=x1_.dtype)
             else:
-                distance = torch.sum(torch.abs(x1_-x2_),dim=-1)
+                self.distance = torch.sum(torch.abs(x1_-x2_),dim=-1)
         else:
-            distance = torch.cdist(x1_, x2_, p=1)
-            distance = distance.clamp_min(1e-15)
+            self.distance = torch.cdist(x1_, x2_, p=1)
+            self.distance = self.distance.clamp_min(1e-15)
 
-        res = torch.exp( -distance )
+        res = torch.exp( -self.distance )
         return res
     
 

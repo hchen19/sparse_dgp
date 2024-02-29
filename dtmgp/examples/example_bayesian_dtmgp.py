@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 class DTMGP:
     def __init__(self, input_dim, output_dim, 
                  design_class, kernel, 
-                 num_monte_carlo=10, batch_size=128, 
+                 num_monte_carlo=1, batch_size=128,
                  lr=1.0, 
                  gamma=0.999, 
                  activation=None, 
@@ -34,6 +34,13 @@ class DTMGP:
                  use_cuda=True,
                  ):
         
+        if torch.cuda.is_available() and use_cuda:
+            self.device = torch.device('cuda:0')
+            print("Using CUDA")
+        else:
+            self.device = torch.device('cpu')
+            print("Using CPU")
+
         torch.manual_seed(seed)
 
         self.lr = lr
@@ -44,15 +51,8 @@ class DTMGP:
         self.num_monte_carlo = num_monte_carlo
 
         self.activation = activation
-        self.use_cuda = use_cuda
 
-        self.model = simple_tmk.SimpleDTMGP(input_dim, output_dim, design_class, kernel)
-
-        if torch.cuda.is_available() and self.use_cuda:
-            self.model.cuda()
-        else:
-            self.model.cpu()
-
+        self.model = simple_tmk.SimpleDTMGP(input_dim, output_dim, design_class, kernel).to(self.device)
         self.reset_optimizer_scheduler() # do not delete this
 
     def reset_optimizer_scheduler(self,):
@@ -62,108 +62,18 @@ class DTMGP:
         self.scheduler = StepLR(self.optimizer, step_size=1, gamma=self.gamma)
         # self.scheduler = CosineAnnealingLR(default_optimizer, 1000, 1e-6)
 
-    def fit(self, X, y,):
-        """Fit Gaussian process regression model.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features) or list of object
-            Feature vectors or other representations of training data.
-
-        y : array-like of shape (n_samples,) or (n_samples, n_targets)
-            Target values
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-        self.X_train_ = np.array(X).astype(np.float32)
-        if self.inverse_y:
-            self.y_train_ = np.array(-y).astype(np.float32) # attention, as relu for non-negative values TODO XXX , so we add minus here
-        else:
-            self.y_train_ = np.array(y).astype(np.float32) 
-
-        if self.activation is not None: assert (min(self.y_train_) > 0) # sometime we need to use F.identity, so no need to assure positive
-
-        train_loader = torch.utils.data.DataLoader(Dataset(self.X_train_, self.y_train_), batch_size=self.batch_size, shuffle=True,)
-
-        losses = self.train(train_loader) # as parallel will fit once, no need to duplicate more fit
-
-        print('loss: {:.4f}, lr: {:.4f}'.format(np.mean(losses), self.optimizer.param_groups[0]['lr']), end=',')
-
-        self.scheduler.step()
-
-        return self
-    
-    def predict(self, X, return_std=False, avg=None, inverse_y=False):
-        """Predict using the model
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features) or list of object
-            Query points where the GP is evaluated.
-
-        return_std : bool, default=False
-            If True, the standard-deviation of the predictive distribution at
-            the query points is returned along with the mean.
-
-        Returns
-        -------
-        y_mean : ndarray of shape (n_samples, [n_output_dims])
-            Mean of predictive distribution a query points.
-
-        y_std : ndarray of shape (n_samples,), optional
-            Standard deviation of predictive distribution at query points.
-            Only returned when `return_std` is True.
-
-        """
-        self.model.eval()
-
-        data = torch.tensor(X).float()
-        if torch.cuda.is_available() and self.use_cuda:
-            data = data.cuda()
-        else:
-            data = data.cpu()
-
-        num_monte_carlo = self.num_monte_carlo if avg is None else 1 # if none (default) we return average else return once result
-        predicts = []
-        with torch.no_grad():
-            for mc_run in range(num_monte_carlo):
-                
-                output, _ = self.model.forward(data)
-
-                predicts.append(output.cpu().data.numpy())
-
-            predicts = np.array(predicts) #needed
-            if self.inverse_y:
-                y_mean = np.mean(-predicts, axis=0) # attention, as relu for non-negative values TODO XXX, so we add minus here
-            else:
-                y_mean = np.mean(predicts, axis=0) 
-            y_std = np.std(predicts, axis=0)
-
-            # print('prediction mean: ',y_mean, 'prediction std: ', y_std)
-
-        if return_std: 
-            return y_mean, y_std
-        else:
-            return y_mean
         
     def train(self, train_loader):
         losses = []
         self.model.train()
         for batch_idx, (data, target) in enumerate(train_loader):
-            
-            if torch.cuda.is_available() and self.use_cuda:
-                target = target.cuda()
-                data = data.cuda()
-            else:
-                target = target.cpu()
-                data = data.cpu()
+            target = target.to(self.device)
+            data = data.to(self.device)
 
             self.optimizer.zero_grad()
             output_ = []
             kl_ = []
-            for mc_run in range(1):
+            for mc_run in range(self.num_monte_carlo):
                 output, kl = self.model(data)
                 output_.append(output)
                 kl_.append(kl)
@@ -188,12 +98,8 @@ class DTMGP:
         test_loss = 0
         with torch.no_grad():
             for data, target in test_loader:
-                if torch.cuda.is_available() and self.use_cuda:
-                    target = target.cuda()
-                    data = data.cuda()
-                else:
-                    target = target.cpu()
-                    data = data.cpu()
+                target = target.to(self.device)
+                data = data.to(self.device)
 
                 output, kl = self.model(data)
                 test_loss += F.mse_loss(output, target, reduction='sum').item() + (
@@ -209,12 +115,8 @@ class DTMGP:
         
         with torch.no_grad():
             for data, target in test_loader:
-                if torch.cuda.is_available() and self.use_cuda:
-                    target = target.cuda()
-                    data = data.cuda()
-                else:
-                    target = target.cpu()
-                    data = data.cpu()
+                target = target.to(self.device)
+                data = data.to(self.device)
 
                 predicts = []
                 for mc_run in range(self.num_monte_carlo):
@@ -264,7 +166,7 @@ def main():
                         help='input batch size for testing (default: 10000)')
     parser.add_argument('--epochs',
                         type=int,
-                        default=20,
+                        default=100,
                         metavar='N',
                         help='number of epochs to train (default: 14)')
     parser.add_argument('--lr',
@@ -293,7 +195,7 @@ def main():
     parser.add_argument(
         '--num_monte_carlo',
         type=int,
-        default=20,
+        default=1,
         metavar='N',
         help='number of Monte Carlo samples to be drawn for inference')
     parser.add_argument('--num_mc',
@@ -316,13 +218,6 @@ def main():
     
 
     args = parser.parse_args()
-    if torch.cuda.is_available() and not args.no_cuda:
-        use_cuda = True
-        print("Using CUDA")
-    else:
-        use_cuda = False
-        print("Using CPU")
-
     torch.manual_seed(args.seed)
 
     ############################################################################################################
@@ -345,7 +240,7 @@ def main():
                 design_class=HyperbolicCrossDesign,
                 kernel=LaplaceProductKernel(lengthscale=1.),
                 batch_size=args.batch_size, lr=args.lr, gamma=args.gamma, 
-                use_cuda=use_cuda)
+                use_cuda=False)
 
     print(args.mode)
     if args.mode == 'train':
@@ -355,7 +250,7 @@ def main():
             loss = bnn.train(train_loader)
             bnn.scheduler.step()
             bnn.test(test_loader)
-            losses+=loss
+            losses += loss
             if epoch % 10 == 0:        
                 torch.save(bnn.model.state_dict(), args.save_dir + "/simple_dtmgp_bayesian_fc.pth")
 
