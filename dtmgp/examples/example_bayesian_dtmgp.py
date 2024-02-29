@@ -240,7 +240,7 @@ def main():
                 design_class=HyperbolicCrossDesign,
                 kernel=LaplaceProductKernel(lengthscale=1.),
                 batch_size=args.batch_size, lr=args.lr, gamma=args.gamma, 
-                use_cuda=False)
+                use_cuda=True)
 
     print(args.mode)
     if args.mode == 'train':
