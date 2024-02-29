@@ -85,7 +85,8 @@ class SimpleDTMGP(nn.Module):
 
     def forward(self, x):
         kl_sum = 0
-        x = F.sigmoid(x)
+        # x = F.sigmoid(x)
+        x = F.normalize(x)
 
         x = self.tmk1(x)
         x, kl = self.fc1(x)
