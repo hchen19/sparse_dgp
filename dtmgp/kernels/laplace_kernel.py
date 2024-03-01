@@ -51,14 +51,25 @@ class LaplaceProductKernel(torch.nn.Module):
         # lengthscale
         d = x1.shape[-1]
         if lengthscale is None:
-            lengthscale = torch.ones(d)*d
+            lengthscale = x1.new_full(size=(d,), fill_value=d)
         if isinstance(lengthscale, (int, float)):
-            lengthscale *= torch.ones(d)
+            
+            # if lengthscale is int or float, such as lengthscale = 3 or 3.0
+            # let lenthscale be d-dimensional torch.Tensor with same value, such as torch.tensor([3.0, 3.0,.., 3.0])
+            lengthscale = x1.new_full(size=(d,), fill_value=lengthscale)
+        
         if isinstance(lengthscale, Tensor):
+            
+            # if lengthscale is a 0-size or one-dim torch.Tensor, such as lengthscale = torch.tensor(3), torch.tensor(3.) or torch.tensor([3]), torch.tensor([3.0])
+            # let lengthscale be d-dimensional torch.Tensor with same value, such as lengthscale = torch.tensor([3.0, 3.0,.., 3.0])
             if lengthscale.ndimension() == 0 or max(lengthscale.size()) == 1:
-                lengthscale *= torch.ones(d)
+                lengthscale = x1.new_full(size=(d,), fill_value=lengthscale)
+            
+            # if dimension of lengthscale is not d, such as lengthscale = torch.tensor([3., 3., 3., 3.]) but d is not equal to 4
+            # raise Error
             if not max(lengthscale.size()) == d:
                 raise RuntimeError("lengthscale and input must have the same dimension")
+        
         lengthscale = lengthscale.reshape(-1)
 
         
