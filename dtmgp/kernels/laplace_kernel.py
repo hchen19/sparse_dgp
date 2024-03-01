@@ -58,7 +58,7 @@ class LaplaceProductKernel(torch.nn.Module):
             # if lengthscale is a 0-size or one-dim torch.Tensor, such as lengthscale = torch.tensor(3), torch.tensor(3.) or torch.tensor([3]), torch.tensor([3.0])
             # let lengthscale be d-dimensional torch.Tensor with same value, such as lengthscale = torch.tensor([3.0, 3.0,.., 3.0])
             if lengthscale.ndimension() == 0 or max(lengthscale.size()) == 1:
-                lengthscale = x1.new_full(size=(d,), fill_value=lengthscale)
+                lengthscale = x1.new_full(size=(d,), fill_value=lengthscale.item())
             
             # if dimension of lengthscale is not d, such as lengthscale = torch.tensor([3., 3., 3., 3.]) but d is not equal to 4
             # raise Error
