@@ -1,5 +1,5 @@
 import torch
-from dtmgp.utils.operators.chol_inv import n_sum_k
+import math
 from dtmgp.utils.sparse_activation.design_class import HyperbolicCrossDesign
 
 
@@ -42,6 +42,9 @@ class SparseGridDesign:
         # initialize
         x_tot = torch.empty(1,d)
         indices_tot = torch.empty(1,d,dtype=int)
+
+        level_combs = {}
+
         id_prt = {} # indices of points in this smolyak iteration
         pts_prt = {} # points in this smolyak iteration (each element is d-dimensional llist)
         pts_prt_set = {} # points in this smolyak iteration (each element is [len(t_arrows[prt,:]), d] size tensor)
@@ -57,6 +60,7 @@ class SparseGridDesign:
             
             t_arrows = n_sum_k(d,t_sum) # [n_prt, d] size tensor
             n_prt = t_arrows.shape[0]
+            level_combs[t_sum] = t_arrows
             
             for prt in range(n_prt): # loop over partitions of eta(differnet t_arrow for the same eta)
                 design_str_fg = [0]*d
@@ -94,6 +98,8 @@ class SparseGridDesign:
         self.pts_prt = pts_prt # use self.pts_prt[t_sum, prt] to extract a d-dimensional list, each entry is one-dim points forming the sgdesign
         self.pts_prt_set = pts_prt_set # use self.pts_prt_set[t_sum, prt] to extract a [len(t_arrows[prt,:]), d] size tensor
         
+        self.level_combs = level_combs
+
         # obtain the set of pts_tot and preserve the order (remove duplicates in pts_tot)
         pts_tot_items = [tuple(l) for l in self.pts_tot.tolist()]
         pts_set_list = list(dict.fromkeys(pts_tot_items))
@@ -110,3 +116,34 @@ class SparseGridDesign:
         self.indices_set = torch.tensor(indices_set_list, dtype=int)
         
         return self
+    
+
+def n_sum_k(n, k):
+    """
+    Method ref:
+    https://www.mathworks.com/matlabcentral/fileexchange/28340-nsumk
+    https://en.wikipedia.org/wiki/Stars_and_bars_(combinatorics)
+
+    ------------------------
+    Parameters:
+    ------------------------
+    n: # of positive integer
+    k: sum of the integers = k
+
+    ------------------------
+    Returns:
+    ------------------------
+    a tensor of all possible combinations of n positive integers adding up to a given number k 
+    """
+    if n == 1:
+        return torch.tensor( [[k]] )
+    else:
+        num_comb = math.comb(k-1, n-1)
+        d1 = torch.zeros(num_comb, 1, dtype=torch.int64) # [num_comb] size tensor
+        sum_vec = torch.arange(1, k)
+        d2 = torch.combinations(sum_vec, r=n-1) # [num_comb, n-1] size tensor
+        d3 = torch.ones(num_comb, 1, dtype=torch.int64) * k # [num_comb] size tensor
+
+        dividers = torch.cat((d1, d2, d3), dim=1)
+        res = torch.diff(dividers, dim=1) # [num_comb, n] size tensor
+        return res

@@ -1,6 +1,5 @@
 from typing import Optional
 
-import itertools
 import math
 import scipy.sparse as sp
 
@@ -9,29 +8,6 @@ from torch import Tensor
 
 from dtmgp.kernels.laplace_kernel import LaplaceProductKernel
 from dtmgp.utils.operators.torch_scipy_sptransfer import torch_coo_to_scipy_coo
-
-
-def n_sum_k(n, k):
-    """
-    ------------------------
-    Parameters:
-    ------------------------
-    n: # of positive integer
-    k: sum of the integers = k
-
-    ------------------------
-    Returns:
-    ------------------------
-    a list of all possible combinations of n positive integers adding up to a given number k 
-    """
-    if n == 1:
-        return torch.tensor( [[k]] )
-    else:
-        res = []
-        for i in itertools.product(range(1, k - n + 2), repeat=n):
-            if sum(i) == k:
-                res.append(i)#yield i
-        return torch.tensor( res )
 
 
 # one-dimension
@@ -130,6 +106,7 @@ def tmk_chol_inv(sparse_grid_design,
     """
     ------------------------
     Parameters:
+    ------------------------
     sparse_grid_design: an object with sparse grid design
     tensor_markov_kernel: Default = LaplaceProductKernel()
 
@@ -138,12 +115,14 @@ def tmk_chol_inv(sparse_grid_design,
 
     ------------------------
     Returns:
+    ------------------------
     Rinv: inverse of Cholesky decomposition of tensor_markov_kernel(sg_points,sg_points)
     """
 
     d = sparse_grid_design.d # dimension
     eta = sparse_grid_design.eta # level
     n_sg = sparse_grid_design.n_pts # the size of sparse grids
+    level_combs = sparse_grid_design.level_combs # combinations of summation equal to levels in for loop
 
     indices_set = sparse_grid_design.indices_set # [n_sg, d] size tensor
     list_full = [tuple(l) for l in indices_set.tolist()] # [n_sg, d] size list of tuple
@@ -156,7 +135,7 @@ def tmk_chol_inv(sparse_grid_design,
     t_sum_start = max(d, eta-d+1)
     for t_sum in range(t_sum_start, eta+1):
         
-        t_arrows = n_sum_k(d,t_sum) # [n_prt, d] size tensor
+        t_arrows = level_combs[t_sum] # [n_prt, d] size tensor
         n_prt = t_arrows.shape[0]
 
         for prt in range(n_prt): # loop over partitions of eta(differnet t_arrow for the same eta)

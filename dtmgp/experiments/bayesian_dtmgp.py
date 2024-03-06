@@ -2,10 +2,6 @@ from __future__ import print_function
 import os
 import argparse
 import sys
-from pathlib import Path # if you haven't already done so
-file = Path(os.path.dirname(os.path.abspath("__file__"))).resolve()
-parent, root = file.parent, file.parents[1]
-sys.path.append(str(root))
 
 import torch
 import torch.nn as nn
@@ -14,12 +10,18 @@ import torch.optim as optim
 from torch.optim.lr_scheduler import StepLR, CosineAnnealingLR
 from torch.utils.tensorboard import SummaryWriter
 import numpy as np
+import matplotlib.pyplot as plt
 
+## run in the working directory = ../sparse_dgp
+# from ..models import simple_tmk_variational as simple_tmk
+# from ..utils.sparse_activation.design_class import HyperbolicCrossDesign
+# from ..kernels.laplace_kernel import LaplaceProductKernel
+# from .dataset.dataset import Dataset
 import dtmgp.models.simple_tmk_variational as simple_tmk
 from dtmgp.utils.sparse_activation.design_class import HyperbolicCrossDesign
 from dtmgp.kernels.laplace_kernel import LaplaceProductKernel
 from dataset.dataset import Dataset
-import matplotlib.pyplot as plt
+
 
 
 class DTMGP:
@@ -224,7 +226,10 @@ def main():
     inputs = np.random.random((1000, args.inputdim))
     outputs = np.sum(inputs, axis=-1)
 
-    inputs, outputs = import_data("./dataset/dataset.pkl")
+    dir_name = os.path.abspath(os.path.dirname(__file__))
+    dataset_path = os.path.join(dir_name, "dataset/dataset.pkl")
+    inputs, outputs = import_data(dataset_path)
+    #inputs, outputs = import_data("./dataset/dataset.pkl")
 
     inputs = inputs.astype(np.float32)
     outputs = np.squeeze(-outputs).astype(np.float32)
@@ -256,7 +261,9 @@ def main():
 
         plt.plot(losses)
         plt.ylim(0, 10)
-        plt.savefig("figures/result_dtmgp_training_test.png", format = 'png', dpi=300)
+        savefigure_path = os.path.join(dir_name, "figures/result_dtmgp_training_test.png")
+        plt.savefig(savefigure_path, format = 'png', dpi=300)
+        #plt.savefig("figures/result_dtmgp_training_test.png", format = 'png', dpi=300)
 
     elif args.mode == 'test':
         checkpoint = args.save_dir + '/simple_dtmgp_bayesian_fc.pth'
