@@ -1,10 +1,8 @@
 from __future__ import print_function
 import os
 import argparse
-import sys
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.optim.lr_scheduler import StepLR, CosineAnnealingLR
@@ -13,11 +11,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 ## run in the working directory = ../sparse_dgp
-# from ..models import simple_tmk_variational as simple_tmk
+# from ..models import simple_dtmgp_variational as simple_dtmgp
 # from ..utils.sparse_activation.design_class import HyperbolicCrossDesign
 # from ..kernels.laplace_kernel import LaplaceProductKernel
 # from .dataset.dataset import Dataset
-import dtmgp.models.simple_tmk_variational as simple_tmk
+import dtmgp.models.simple_dtmgp_variational as simple_dtmgp
 from dtmgp.utils.sparse_activation.design_class import HyperbolicCrossDesign
 from dtmgp.kernels.laplace_kernel import LaplaceProductKernel
 from dataset.dataset import Dataset
@@ -27,7 +25,7 @@ from dataset.dataset import Dataset
 class DTMGP:
     def __init__(self, input_dim, output_dim, 
                  design_class, kernel, 
-                 num_monte_carlo=1, batch_size=128,
+                 num_mc=1, batch_size=128,
                  lr=1.0, 
                  gamma=0.999, 
                  activation=None, 
@@ -50,11 +48,11 @@ class DTMGP:
         self.inverse_y = inverse_y
 
         self.batch_size = batch_size
-        self.num_monte_carlo = num_monte_carlo
+        self.num_mc = num_mc
 
         self.activation = activation
 
-        self.model = simple_tmk.SimpleDTMGP(input_dim, output_dim, design_class, kernel).to(self.device)
+        self.model = simple_dtmgp.SimpleDTMGP(input_dim, output_dim, design_class, kernel).to(self.device)
         self.reset_optimizer_scheduler() # do not delete this
 
     def reset_optimizer_scheduler(self,):
@@ -75,7 +73,7 @@ class DTMGP:
             self.optimizer.zero_grad()
             output_ = []
             kl_ = []
-            for mc_run in range(self.num_monte_carlo):
+            for mc_run in range(self.num_mc):
                 output, kl = self.model(data)
                 output_.append(output)
                 kl_.append(kl)
@@ -121,7 +119,7 @@ class DTMGP:
                 data = data.to(self.device)
 
                 predicts = []
-                for mc_run in range(self.num_monte_carlo):
+                for mc_run in range(self.num_mc):
                     self.model.eval()
                     output, _ = self.model.forward(data)
                     loss = F.mse_loss(output, target).cpu().data.numpy()
@@ -197,12 +195,12 @@ def main():
     parser.add_argument(
         '--num_monte_carlo',
         type=int,
-        default=1,
+        default=20,
         metavar='N',
         help='number of Monte Carlo samples to be drawn for inference')
     parser.add_argument('--num_mc',
                         type=int,
-                        default=1,
+                        default=5,
                         metavar='N',
                         help='number of Monte Carlo runs during training')
     parser.add_argument(
