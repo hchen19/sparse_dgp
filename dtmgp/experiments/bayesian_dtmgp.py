@@ -25,7 +25,7 @@ from dataset.dataset import Dataset
 class DTMGP:
     def __init__(self, input_dim, output_dim, 
                  design_class, kernel, 
-                 num_mc=1, batch_size=128,
+                 num_mc=1, num_monte_carlo=10, batch_size=128,
                  lr=1.0, 
                  gamma=0.999, 
                  activation=None, 
@@ -49,6 +49,7 @@ class DTMGP:
 
         self.batch_size = batch_size
         self.num_mc = num_mc
+        self.num_monte_carlo = num_monte_carlo
 
         self.activation = activation
 
@@ -119,7 +120,7 @@ class DTMGP:
                 data = data.to(self.device)
 
                 predicts = []
-                for mc_run in range(self.num_mc):
+                for mc_run in range(self.num_monte_carlo):
                     self.model.eval()
                     output, _ = self.model.forward(data)
                     loss = F.mse_loss(output, target).cpu().data.numpy()

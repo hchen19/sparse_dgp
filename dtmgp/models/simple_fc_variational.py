@@ -64,11 +64,11 @@ class SFC(nn.Module):
         x = F.relu(x)
         x, kl = self.fc3(x)
         kl_sum += kl
-        x = F.relu(x)        
+        x = F.relu(x)
         x, kl = self.fc4(x)
         kl_sum += kl
         if self.activation is None:
             output = x
         else:
-            output = self.activation(x) # attention, this only regress non-negative values TODO XXX
-        return torch.squeeze(output), kl_sum 
+            output = self.activation(x)  # attention, this only regress non-negative values TODO XXX
+        return torch.squeeze(output), kl_sum

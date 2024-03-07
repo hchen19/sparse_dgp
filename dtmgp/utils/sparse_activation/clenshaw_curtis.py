@@ -24,7 +24,7 @@ def cc_design(deg, input_bd=[-1,1], dyadic_sort=True):
         for i in range(1, deg+1):
             m_i = 2**i
             increment_set = - torch.cos( torch.pi * torch.arange(start=1, end=m_i, step=2) / m_i)
-            res_basis = torch.cat((res_basis,increment_set),dim=0)
+            res_basis = torch.cat((res_basis,increment_set), dim=0)
     else:
         res_basis = - torch.cos( torch.pi * torch.arange(1, n) / n) # interval on [-1,1]
     

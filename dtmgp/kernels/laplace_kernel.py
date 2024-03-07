@@ -5,10 +5,13 @@ from torch import Tensor
 
 
 class LaplaceProductKernel(torch.nn.Module):
-    """
-    lengthscale: [d] size tensor
-    """
     def __init__(self, lengthscale=None):
+        """
+        Implements Laplace Product Kernel.
+
+        Parameters:
+            lengthscale: None -> [d] size tensor
+        """
         super().__init__()
         self.lengthscale = lengthscale
 
@@ -38,27 +41,25 @@ class LaplaceProductKernel(torch.nn.Module):
                 x2 = x2.unsqueeze(1)
             if not x1.size(-1) == x2.size(-1):
                 raise RuntimeError("x1 and x2 must have the same number of dimensions!")
-        
-        if x2 is None:
+        else:
             x2 = x1
-        
 
         # lengthscale
         d = x1.shape[-1]
+
         if lengthscale is None:
-            lengthscale = x1.new_full(size=(d,), fill_value=d)
+            lengthscale = x1.new_full(size=(d,), fill_value=d, dtype=x1.dtype)
+
         if isinstance(lengthscale, (int, float)):
-            
             # if lengthscale is int or float, such as lengthscale = 3 or 3.0
             # let lenthscale be d-dimensional torch.Tensor with same value, such as torch.tensor([3.0, 3.0,.., 3.0])
-            lengthscale = x1.new_full(size=(d,), fill_value=lengthscale)
+            lengthscale = x1.new_full(size=(d,), fill_value=lengthscale, dtype=x1.dtype)
         
         if isinstance(lengthscale, Tensor):
-            
             # if lengthscale is a 0-size or one-dim torch.Tensor, such as lengthscale = torch.tensor(3), torch.tensor(3.) or torch.tensor([3]), torch.tensor([3.0])
             # let lengthscale be d-dimensional torch.Tensor with same value, such as lengthscale = torch.tensor([3.0, 3.0,.., 3.0])
             if lengthscale.ndimension() == 0 or max(lengthscale.size()) == 1:
-                lengthscale = x1.new_full(size=(d,), fill_value=lengthscale.item())
+                lengthscale = x1.new_full(size=(d,), fill_value=lengthscale.item(), dtype=x1.dtype)
             
             # if dimension of lengthscale is not d, such as lengthscale = torch.tensor([3., 3., 3., 3.]) but d is not equal to 4
             # raise Error
@@ -67,11 +68,7 @@ class LaplaceProductKernel(torch.nn.Module):
         
         lengthscale = lengthscale.reshape(-1)
 
-        
-        adjustment = x1.mean(dim=-2, keepdim=True) # [d] size tensor
-        # print("x1:", x1.device)
-        # print("adjustment:", adjustment.device)
-        # print("lengthscale:", lengthscale.device)
+        adjustment = x1.mean(dim=-2, keepdim=True)  # [d] size tensor
         x1_ = (x1 - adjustment).div(lengthscale)
         x2_ = (x2 - adjustment).div(lengthscale)
         #distance = self.covar_dist(x1_, x2_, diag=diag, **params)
@@ -80,16 +77,15 @@ class LaplaceProductKernel(torch.nn.Module):
         if diag:
             # Special case the diagonal because we can return all zeros most of the time.
             if x1_eq_x2:
-                distance = torch.zeros(*x1_.shape[:-2], x1_.shape[-2], dtype=x1_.dtype, device=x1_.device)
+                distance = torch.zeros(*x1_.shape[:-2], x1_.shape[-2], dtype=x1_.dtype, device=x1.device)
             else:
-                distance = torch.sum(torch.abs(x1_-x2_),dim=-1)
+                distance = torch.sum(torch.abs(x1_-x2_), dim=-1)
         else:
             distance = torch.cdist(x1_, x2_, p=1)
             distance = distance.clamp_min(1e-15)
 
-        res = torch.exp( -distance )
+        res = torch.exp(-distance)
         return res
-    
 
     # def covar_dist(
     #     self,
@@ -145,6 +141,12 @@ class LaplaceAdditiveKernel(torch.nn.Module):
     lengthscale: [d] size tensor
     """
     def __init__(self, lengthscale=None):
+        """
+        Implements Laplace Additive Kernel.
+
+        Parameters:
+            lengthscale: None -> [d] size tensor
+        """
         super().__init__()
         self.lengthscale = lengthscale
 
@@ -174,27 +176,24 @@ class LaplaceAdditiveKernel(torch.nn.Module):
                 x2 = x2.unsqueeze(1)
             if not x1.size(-1) == x2.size(-1):
                 raise RuntimeError("x1 and x2 must have the same number of dimensions!")
-        
-        if x2 is None:
+        else:
             x2 = x1
-        
 
         # lengthscale
         d = x1.shape[-1]
         if lengthscale is None:
-            lengthscale = x1.new_full(size=(d,), fill_value=d)
+            lengthscale = x1.new_full(size=(d,), fill_value=d, dtype=x1.dtype)
+
         if isinstance(lengthscale, (int, float)):
-            
             # if lengthscale is int or float, such as lengthscale = 3 or 3.0
             # let lenthscale be d-dimensional torch.Tensor with same value, such as torch.tensor([3.0, 3.0,.., 3.0])
-            lengthscale = x1.new_full(size=(d,), fill_value=lengthscale)
+            lengthscale = x1.new_full(size=(d,), fill_value=lengthscale, dtype=x1.dtype)
         
         if isinstance(lengthscale, Tensor):
-            
             # if lengthscale is a 0-size or one-dim torch.Tensor, such as lengthscale = torch.tensor(3), torch.tensor(3.) or torch.tensor([3]), torch.tensor([3.0])
             # let lengthscale be d-dimensional torch.Tensor with same value, such as lengthscale = torch.tensor([3.0, 3.0,.., 3.0])
             if lengthscale.ndimension() == 0 or max(lengthscale.size()) == 1:
-                lengthscale = x1.new_full(size=(d,), fill_value=lengthscale.item())
+                lengthscale = x1.new_full(size=(d,), fill_value=lengthscale.item(), dtype=x1.dtype)
             
             # if dimension of lengthscale is not d, such as lengthscale = torch.tensor([3., 3., 3., 3.]) but d is not equal to 4
             # raise Error
@@ -204,9 +203,6 @@ class LaplaceAdditiveKernel(torch.nn.Module):
         lengthscale = lengthscale.reshape(-1)
 
         adjustment = x1.mean(dim=-2, keepdim=True) # [d] size tensor
-        # print("x1:", x1.device)
-        # print("adjustment:", adjustment.device)
-        # print("lengthscale:", lengthscale.device)
         x1_ = (x1 - adjustment).div(lengthscale)
         x2_ = (x2 - adjustment).div(lengthscale)
         #distance = self.covar_dist(x1_, x2_, diag=diag, **params)
@@ -215,14 +211,14 @@ class LaplaceAdditiveKernel(torch.nn.Module):
         if diag:
             # Special case the diagonal because we can return all zeros most of the time.
             if x1_eq_x2:
-                distance = torch.zeros(*x1_.shape[:-2], x1_.shape[-2], dtype=x1_.dtype, device=x1_.device)
+                distance = torch.zeros(*x1_.shape[:-2], x1_.shape[-2], dtype=x1_.dtype, device=x1.device)
             else:
                 distance = torch.abs(x1_-x2_)
         else:
             distance = x1_.unsqueeze(dim=-2).repeat(*x1_.shape[:-2],1,x2_.shape[-2],1) - x2_.unsqueeze(dim=-3).repeat(*x2_.shape[:-2],x1_.shape[-2],1,1)
             #distance = distance.clamp_min(1e-15)
 
-        res = torch.sum( torch.exp( -distance ), dim=-1 )
+        res = torch.sum(torch.exp(-distance), dim=-1)
         return res
 
 

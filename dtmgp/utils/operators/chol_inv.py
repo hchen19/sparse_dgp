@@ -59,7 +59,7 @@ def mk_chol_inv(dyadic_design,
             # row_index_xleft = indices_sort.tolist().index(left_index)
             # row_index_xright = indices_sort.tolist().index(right_index)
             row_Rinv[ii : ii+3] = torch.tensor([row_index_xleft, i, row_index_xright], dtype=int)
-            col_Rinv[ii : ii+3] = torch.ones(3, dtype=int)*i
+            col_Rinv[ii : ii+3] = torch.ones(3, dtype=int) * i
             data_Rinv[ii : ii+3] = coeffs
 
             ii += 3
@@ -93,7 +93,8 @@ def mk_chol_inv(dyadic_design,
     
     Rinv = torch.sparse_coo_tensor(indices=torch.vstack((row_Rinv, col_Rinv)), 
                                    values=data_Rinv, 
-                                  size=(n, n))
+                                   size=(n, n)
+                                   )
     
     res = Rinv if upper else Rinv.T
     return res
