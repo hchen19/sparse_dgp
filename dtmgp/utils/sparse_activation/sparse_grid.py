@@ -5,16 +5,24 @@ from dtmgp.utils.sparse_activation.design_class import HyperbolicCrossDesign
 
 class SparseGridDesign:
     """
-    ------------------------
-    Parameters:
-    d: dimension of input, d >= 2
-    eta: level of sparse grid design
-    design_fun: design used in one dimension, default = hc_design (Here we assume the sparse grid design is the same in each dimension)
-    input_bd: [d,2] size list, default value = [[0,1]]*d
+    :class:`~SparseGridDeisgn` is a class Generate a sparse grid structure of dimension :math:`d`, level :math:`\eta`
+    and base design class
 
-    ------------------------
-    Returns:
-    self: an object with sparse grid design
+    :param d: dimension of input, d >= 2
+    :type d: int
+    :param eta: (Default: d+2) level of sparse grid design, eta > d
+    :type eta: int
+    :param, input_bd: (Default: [[0,1]]*d)
+    :type input_bd: [d,2] size list
+    :param design_class: design used in one dimension, default = hc_design (Here we assume the sparse grid design is the same in each dimension)
+    :type design_class: class
+    ...
+    :raise RuntimeError: level eta should be greater than dimension d
+    
+
+    Example:
+        >>> sgdesign_init = SparseGridDesign(d=2, eta=4, input_bd=input_bd, design_class=HyperbolicCrossDesign)
+        >>> sgdesign = sgdesign_init.gen_sg(dyadic_sort=True, return_neighbors=True)
     """
 
     def __init__(self, d, eta=None, 
@@ -34,6 +42,11 @@ class SparseGridDesign:
             raise RuntimeError("level eta should be greater than dimension d")
     
     def gen_sg(self,dyadic_sort=True, return_neighbors=True):
+        """
+        ...
+        :return: an object with sparse grid design
+        :rtype: class
+        """
         d = self.d
         eta = self.eta
         design_class = self.design_class
@@ -124,13 +137,11 @@ def n_sum_k(n, k):
     https://www.mathworks.com/matlabcentral/fileexchange/28340-nsumk
     https://en.wikipedia.org/wiki/Stars_and_bars_(combinatorics)
 
-    ------------------------
     Parameters:
     ------------------------
     n: # of positive integer
     k: sum of the integers = k
 
-    ------------------------
     Returns:
     ------------------------
     a tensor of all possible combinations of n positive integers adding up to a given number k 
