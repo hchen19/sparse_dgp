@@ -25,11 +25,12 @@ class ReLU(nn.Module):
 
 
 class MinMax(nn.Module):
-    def __init__(self, bias=False):
+    def __init__(self, lengthscale=1., bias=False):
         """
         Implements Min-max normalization as an activation
         """
         super().__init__()
+        self.lengthscale = lengthscale
         self.bias = bias
 
     def forward(self, x):
@@ -45,5 +46,5 @@ class MinMax(nn.Module):
         if x.min() == x.max():
             return x
         else:
-            out = (x - x.min()) / (x.max() - x.min())
+            out = self.lengthscale * (x - x.min()) / (x.max() - x.min())
             return out
