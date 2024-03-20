@@ -60,7 +60,7 @@ class AdditiveDTMGP(nn.Module):
                 posterior_mu_init=posterior_mu_init,
                 posterior_rho_init=posterior_rho_init,
                 bias=True,
-            ) for _ in range(input_dim)
+            ) for _ in range(w1)
         ])
     
 
@@ -81,7 +81,7 @@ class AdditiveDTMGP(nn.Module):
                 posterior_mu_init=posterior_mu_init,
                 posterior_rho_init=posterior_rho_init,
                 bias=True,
-            ) for _ in range(input_dim)
+            ) for _ in range(w2)
         ])
 
     def forward(self, x):
@@ -90,7 +90,7 @@ class AdditiveDTMGP(nn.Module):
         def sumup(input, fc, tmk):
             outs_x = 0
             outs_kl = 0
-            for i in range(self.input_dim):
+            for i in range(len(fc)):
                 outs_x_ele, outs_kl_ele = fc[i]( tmk(input[...,i][...,None]) ) 
                 outs_x += outs_x_ele
                 outs_kl += outs_kl_ele
