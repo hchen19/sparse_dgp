@@ -2,6 +2,7 @@
 Tensor Markov Kernel activation function
 """
 
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -93,21 +94,19 @@ class tmgp_additive(nn.Module):
 
     def forward(self, x):
         """
-        ------------------------
         Parameters:
-        x: [n,d] size tensor, n is the number of the input, d is the dimension of the input
-        self.design_points: [m,d] size tensor, sparse grid points X^{SG} of dyadic sort
+        ------------------------
+        x: [n,d=1] size tensor, n is the number of the input, d is the dimension of the input
+        self.design_points: [m,d=1] size tensor, sparse grid points X^{SG} of dyadic sort
         self.chol_inv: [m,m] size tensor, inverse of Cholesky decomposition of kernel(sparse_grid,sparse_grid),
                 stored in torch.sparse_coo_tensor format
 
-        ------------------------
         Returns:
-        out: [n,m] size tensor, kernel(input, sparse_grid) @ chol_inv
+        ------------------------
+        out: [n,m] size tensor, kernel(input[:,dim], design_points) @ chol_inv
         """
         x = F.normalize(x)
-        out = 0.
-        for i in range(x.shape[-1]):
-            k_star = self.kernel(x[..., i], self.design_points)  # [n, m] size tenosr
-            out += k_star @ self.chol_inv  # [n, m] size tensor
+        k_star = self.kernel(x, self.design_points)  # [...,n, m] size tenosr
+        out = k_star @ self.chol_inv  # [..., n, m] size tensor
 
         return out

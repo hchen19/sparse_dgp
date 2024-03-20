@@ -10,8 +10,7 @@ from torch.utils.tensorboard import SummaryWriter
 import numpy as np
 import matplotlib.pyplot as plt
 
-from dtmgp.layers.tmgps import tmgp_sg, tmgp_additive
-import dtmgp.models.simple_dtmgp_variational as simple_dtmgp
+import dtmgp.models.simple_dtmgp_additive_variational as simple_dtmgp
 from dtmgp.utils.sparse_activation.design_class import HyperbolicCrossDesign
 from dtmgp.kernels.laplace_kernel import LaplaceProductKernel
 from .dataset.dataset import Dataset
@@ -20,7 +19,7 @@ from .dataset.dataset import Dataset
 
 class DTMGP:
     def __init__(self, input_dim, output_dim, 
-                 design_class, kernel, tmgp_activation,
+                 design_class, kernel,
                  num_mc=1, num_monte_carlo=10, batch_size=128,
                  lr=1.0, 
                  gamma=0.999, 
@@ -49,7 +48,7 @@ class DTMGP:
 
         self.activation = activation
 
-        self.model = simple_dtmgp.SimpleDTMGP(input_dim, output_dim, design_class, kernel, tmgp_activation).to(self.device)
+        self.model = simple_dtmgp.AdditiveDTMGP(input_dim, output_dim, design_class, kernel).to(self.device)
         self.reset_optimizer_scheduler() # do not delete this
 
     def reset_optimizer_scheduler(self,):
@@ -147,10 +146,6 @@ def main():
     dir_name = os.path.abspath(os.path.dirname(__file__))
     # Training settings
     parser = argparse.ArgumentParser(description='PyTorch simple DTMGP Example')
-    parser.add_argument('--tmgp_activation',
-                        default=tmgp_additive, #tmgp_sg or tmgp_additive
-                        help='tmgp activation class, tmgp_sg or tmgp_additive (default: tmgp_additive)'
-                        )
     parser.add_argument('--inputdim',
                         type=int,
                         default=7,
@@ -244,7 +239,6 @@ def main():
     bnn = DTMGP(input_dim=inputs.shape[-1], output_dim=1,
                 design_class=HyperbolicCrossDesign,
                 kernel=LaplaceProductKernel(lengthscale=1.),
-                tmgp_activation=args.tmgp_activation,
                 batch_size=args.batch_size, lr=args.lr, gamma=args.gamma, 
                 use_cuda=True)
 
@@ -258,25 +252,16 @@ def main():
             bnn.test(test_loader)
             losses += loss
             if epoch % 10 == 0:
-                if args.tmgp_activation == tmgp_sg:        
-                    torch.save(bnn.model.state_dict(), args.save_dir + "/simple_dtmgp_sg_bayesian_fc.pth")
-                if args.tmgp_activation == tmgp_additive:
-                    torch.save(bnn.model.state_dict(), args.save_dir + "/simple_dtmgp_additive_bayesian_fc.pth")
+                torch.save(bnn.model.state_dict(), args.save_dir + "/simple_dtmgp_additive_bayesian_fc.pth")
 
         plt.plot(losses)
         plt.ylim(0, 10)
-        if args.tmgp_activation == tmgp_sg:
-            savefigure_path = os.path.join(dir_name, "figures/result_dtmgp_sg_training_test.png")
-        if args.tmgp_activation == tmgp_additive:
-            savefigure_path = os.path.join(dir_name, "figures/result_dtmgp_additive_training_test.png")
+        savefigure_path = os.path.join(dir_name, "figures/result_dtmgp_additive_training_test.png")
         plt.savefig(savefigure_path, format = 'png', dpi=300)
         #plt.savefig("figures/result_dtmgp_training_test.png", format = 'png', dpi=300)
 
     elif args.mode == 'test':
-        if args.tmgp_activation == tmgp_sg:
-            checkpoint = args.save_dir + '/simple_dtmgp_sg_bayesian_fc.pth'
-        if args.tmgp_activation == tmgp_additive:
-            checkpoint = args.save_dir + '/simple_dtmgp_additive_bayesian_fc.pth'
+        checkpoint = args.save_dir + '/simple_dtmgp_additive_bayesian_fc.pth'
         bnn.model.load_state_dict(torch.load(checkpoint))
         bnn.evaluate(train_loader)
         bnn.evaluate(test_loader)
