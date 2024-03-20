@@ -38,18 +38,19 @@ class AdditiveDTMGP(nn.Module):
             posterior_rho_init=posterior_rho_init,
             bias=True,
         )
-        # move axis of input: [input_dim,...,n, w1] --> [...,n, w1, input_dim], use `x.moveaxis(0,-1)`
-        # return [...,n, w1,1] size tensor for [...,n, w1, input_dim] size input and [input_dim, 1] size weights
-        self.fc_add1 = LinearReparameterization(
-            in_features=input_dim,
-            out_features=1,
-            prior_mean=prior_mu,
-            prior_variance=prior_sigma,
-            posterior_mu_init=posterior_mu_init,
-            posterior_rho_init=posterior_rho_init,
-            bias=True,
-        )
-        # squeeze input: [...,n, w1,1] --> [...,n, w1], use `x.squeeze(dim=-1)`
+        
+        # # move axis of input: [input_dim,...,n, w1] --> [...,n, w1, input_dim], use `x.moveaxis(0,-1)`
+        # # return [...,n, w1,1] size tensor for [...,n, w1, input_dim] size input and [input_dim, 1] size weights
+        # self.fc_add1 = LinearReparameterization(
+        #     in_features=input_dim,
+        #     out_features=1,
+        #     prior_mean=prior_mu,
+        #     prior_variance=prior_sigma,
+        #     posterior_mu_init=posterior_mu_init,
+        #     posterior_rho_init=posterior_rho_init,
+        #     bias=True,
+        # )
+        # # squeeze input: [...,n, w1,1] --> [...,n, w1], use `x.squeeze(dim=-1)`
 
 
         #################################################################################
@@ -69,18 +70,19 @@ class AdditiveDTMGP(nn.Module):
             posterior_rho_init=posterior_rho_init,
             bias=True,
         )
-        # move axis of input: [w1,...,n, w2] --> [...,n, w2, w1], use `x.moveaxis(0,-1)`
-        # return [...,n, w2,1] size tensor for [...,n, w2, w1] size input and [w1, 1] size weights
-        self.fc_add2 = LinearReparameterization(
-            in_features=w1,
-            out_features=1,
-            prior_mean=prior_mu,
-            prior_variance=prior_sigma,
-            posterior_mu_init=posterior_mu_init,
-            posterior_rho_init=posterior_rho_init,
-            bias=True,
-        )
-        # squeeze input: [...,n, w2,1] --> [...,n, w2], use `x.squeeze(dim=-1)`
+
+        # # move axis of input: [w1,...,n, w2] --> [...,n, w2, w1], use `x.moveaxis(0,-1)`
+        # # return [...,n, w2,1] size tensor for [...,n, w2, w1] size input and [w1, 1] size weights
+        # self.fc_add2 = LinearReparameterization(
+        #     in_features=w1,
+        #     out_features=1,
+        #     prior_mean=prior_mu,
+        #     prior_variance=prior_sigma,
+        #     posterior_mu_init=posterior_mu_init,
+        #     posterior_rho_init=posterior_rho_init,
+        #     bias=True,
+        # )
+        # # squeeze input: [...,n, w2,1] --> [...,n, w2], use `x.squeeze(dim=-1)`
 
 
         #################################################################################
@@ -100,40 +102,38 @@ class AdditiveDTMGP(nn.Module):
             posterior_rho_init=posterior_rho_init,
             bias=True,
         )
-        # move axis of input: [w2,...,n, w3] --> [...,n, w3, w2], use `x.moveaxis(0,-1)`
-        # return [...,n, w3,1] size tensor for [...,n, w3, w2] size input and [w2, 1] size weights
-        self.fc_add3 = LinearReparameterization(
-            in_features=w2,
-            out_features=1,
-            prior_mean=prior_mu,
-            prior_variance=prior_sigma,
-            posterior_mu_init=posterior_mu_init,
-            posterior_rho_init=posterior_rho_init,
-            bias=True,
-        )
-        # squeeze input: [...,n, w3,1] --> [...,n, w3], use `x.squeeze(dim=-1)`
+
+        # # move axis of input: [w2,...,n, w3] --> [...,n, w3, w2], use `x.moveaxis(0,-1)`
+        # # return [...,n, w3,1] size tensor for [...,n, w3, w2] size input and [w2, 1] size weights
+        # self.fc_add3 = LinearReparameterization(
+        #     in_features=w2,
+        #     out_features=1,
+        #     prior_mean=prior_mu,
+        #     prior_variance=prior_sigma,
+        #     posterior_mu_init=posterior_mu_init,
+        #     posterior_rho_init=posterior_rho_init,
+        #     bias=True,
+        # )
+        # # squeeze input: [...,n, w3,1] --> [...,n, w3], use `x.squeeze(dim=-1)`
     
     
     def forward(self, x):
         kl_sum = 0
         
         x = self.tmk1(x)
-        x, _ = self.fc1(x)
-        x, kl = self.fc_add1(x.moveaxis(0,-1))
-        x = x.squeeze(dim=-1)
-        kl_sum += kl.squeeze(dim=-1)
+        x, kl = self.fc1(x)
+        x = x.sum(dim=0)
+        kl_sum += kl.sum(dim=0)
 
         x = self.tmk2(x)
-        x, _ = self.fc2(x)
-        x, kl = self.fc_add2(x.moveaxis(0,-1))
-        x = x.squeeze(dim=-1)
-        kl_sum += kl.squeeze(dim=-1)
+        x, kl = self.fc2(x)
+        x = x.sum(dim=0)
+        kl_sum += kl.sum(dim=0)
 
         x = self.tmk3(x)
-        x, _ = self.fc3(x)
-        x, kl = self.fc_add3(x.moveaxis(0,-1))
-        x = x.squeeze(dim=-1)
-        kl_sum += kl.squeeze(dim=-1)
+        x, kl = self.fc3(x)
+        x = x.sum(dim=0)
+        kl_sum += kl.sum(dim=0)
 
         if self.activation is None:
             output = x
