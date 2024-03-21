@@ -1,5 +1,6 @@
 from __future__ import print_function
 import os
+import time
 import argparse
 
 import torch
@@ -11,9 +12,6 @@ from torch.utils.tensorboard import SummaryWriter
 import numpy as np
 import matplotlib.pyplot as plt
 
-## run in the working directory = ../sparse_dgp
-# from ..models import simple_fc_variational as simple_bnn
-# from .dataset.dataset import Dataset
 import dtmgp.models.simple_fc_variational as simple_bnn
 from dataset.dataset import Dataset
 
@@ -162,7 +160,7 @@ def main():
                         help='input batch size for testing (default: 10000)')
     parser.add_argument('--epochs',
                         type=int,
-                        default=100,
+                        default=200,
                         metavar='N',
                         help='number of epochs to train (default: 14)')
     parser.add_argument('--lr',
@@ -238,6 +236,7 @@ def main():
     bnn = BNN(input_dim=inputs.shape[-1],batch_size=args.batch_size, lr=args.lr, gamma=args.gamma)
 
     print(args.mode)
+    start = time.time()
     if args.mode == 'train':
         losses = []
         for epoch in range(args.epochs):
@@ -261,7 +260,8 @@ def main():
         bnn.evaluate(train_loader)
         bnn.evaluate(test_loader)
 
-    print("done.")
+    end = time.time()
+    print("done. Total time: " + str(end - start))
 
 
 if __name__ == '__main__':

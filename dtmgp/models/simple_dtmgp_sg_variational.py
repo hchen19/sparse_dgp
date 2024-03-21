@@ -1,8 +1,6 @@
 from __future__ import print_function
-import argparse
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 from dtmgp.layers.linear_variational import LinearReparameterization
 from dtmgp.layers.tmgps import tmgp_sg
@@ -43,7 +41,7 @@ class SparsegridDTMGP(nn.Module):
         ## 2nd layer of DGP: input:[n, w1] size tensor, output:[n, w2] size tensor
         #################################################################################
         # return [n, m2] size tensor for [n, w1] size input and [m2, w1] size sparse grid
-        self.tmk2 = tmgp_sg(in_features=w1, n_level=2, design_class=design_class, kernel=kernel)
+        self.tmk2 = tmgp_sg(in_features=w1, n_level=3, design_class=design_class, kernel=kernel)
         m2 = self.tmk2.out_features
         w2 = 8
         # return [n, w2] size tensor for [n, m2] size input and [m2, w2] size weights
@@ -61,7 +59,7 @@ class SparsegridDTMGP(nn.Module):
         ## 3rd layer of DGP: input:[n, w2] size tensor, output:[n, w3] size tensor
         #################################################################################
         # return [n, m3] size tensor for [n, w2] size input and [m3, w2] size sparse grid
-        self.tmk3 = tmgp_sg(in_features=w2, n_level=2, design_class=design_class, kernel=kernel)
+        self.tmk3 = tmgp_sg(in_features=w2, n_level=3, design_class=design_class, kernel=kernel)
         m3 = self.tmk3.out_features
         w3 = output_dim
         # return [n, w3] size tensor for [n, m3] size input and [m3, w3] size weights

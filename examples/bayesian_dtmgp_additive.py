@@ -1,5 +1,6 @@
 from __future__ import print_function
 import os
+import time
 import argparse
 
 import torch
@@ -13,8 +14,7 @@ import matplotlib.pyplot as plt
 import dtmgp.models.simple_dtmgp_additive_variational as simple_dtmgp
 from dtmgp.utils.sparse_activation.design_class import HyperbolicCrossDesign
 from dtmgp.kernels.laplace_kernel import LaplaceProductKernel
-from .dataset.dataset import Dataset
-
+from dataset.dataset import Dataset
 
 
 class DTMGP:
@@ -243,6 +243,7 @@ def main():
                 use_cuda=True)
 
     print(args.mode)
+    start = time.time()
     if args.mode == 'train':
         losses = []
         for epoch in range(args.epochs):
@@ -258,7 +259,6 @@ def main():
         plt.ylim(0, 10)
         savefigure_path = os.path.join(dir_name, "figures/result_dtmgp_additive_training_test.png")
         plt.savefig(savefigure_path, format = 'png', dpi=300)
-        #plt.savefig("figures/result_dtmgp_training_test.png", format = 'png', dpi=300)
 
     elif args.mode == 'test':
         checkpoint = args.save_dir + '/simple_dtmgp_additive_bayesian_fc.pth'
@@ -266,7 +266,8 @@ def main():
         bnn.evaluate(train_loader)
         bnn.evaluate(test_loader)
 
-    print("done.")
+    end = time.time()
+    print("done. Total time: " + str(end - start))
 
 
 if __name__ == '__main__':
