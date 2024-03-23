@@ -1,7 +1,7 @@
 """
 Tensor Markov Kernel activation function
 """
-
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -82,6 +82,7 @@ class tmgp_additive(nn.Module):
         """
         super().__init__()
 
+        self.in_features = in_features
         self.kernel = kernel
         self.scaler = MinMax()
 
@@ -91,7 +92,7 @@ class tmgp_additive(nn.Module):
 
         self.register_buffer('design_points', design_points)  # [m,d] size tensor, sparse grid points X^{SG} of dyadic sort
         self.register_buffer('chol_inv', chol_inv)  # [m,m] size tensor, inverse of Cholesky decomposition of kernel(X^{SG},X^{SG})
-        self.out_features = design_points.shape[0]
+        self.out_features = design_points.shape[0] * in_features
 
     def forward(self, x):
         """
@@ -107,7 +108,10 @@ class tmgp_additive(nn.Module):
         out: [n,m] size tensor, kernel(input[:,dim], design_points) @ chol_inv
         """
         x = self.scaler(x)
+        x = torch.permute(x, (1,0))
+        x = torch.flatten(x)
         k_star = self.kernel(x, self.design_points)  # [...,n, m] size tenosr
-        out = k_star @ self.chol_inv  # [..., n, m] size tensor
+        phi = k_star @ self.chol_inv  # [..., n, m] size tensor
+        out = phi.reshape(-1, self.out_features)
 
         return out

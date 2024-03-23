@@ -11,7 +11,7 @@ from torch.utils.tensorboard import SummaryWriter
 import numpy as np
 import matplotlib.pyplot as plt
 
-import dtmgp.models.simple_dtmgp_additive_variational as simple_dtmgp
+import dtmgp.models.simple_dtmgp_add_variational as simple_dtmgp
 from dtmgp.utils.sparse_activation.design_class import HyperbolicCrossDesign
 from dtmgp.kernels.laplace_kernel import LaplaceProductKernel
 from dataset.dataset import Dataset

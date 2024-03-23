@@ -23,9 +23,9 @@ class AdditiveDTMGP(nn.Module):
         ## 1st layer of DGP: input:[n, input_dim] size tensor, output:[n, w1] size tensor
         #################################################################################
         # return [n, m1] size tensor for [n, input_dim] size input and [m1, input_dim] size sparse grid
-        self.tmk1 = tmgp_additive(in_features=input_dim, n_level=5, design_class=design_class, kernel=kernel)
-        m1 = self.tmk1.out_features * input_dim
-        w1 = 8
+        self.tmk1 = tmgp_additive(in_features=input_dim, n_level=6, design_class=design_class, kernel=kernel)
+        m1 = self.tmk1.out_features
+        w1 = 16
         # return [n, w1] size tensor for [n, m1] size input and [m1, w1] size weights
         self.fc1 = LinearReparameterization(
             in_features=m1,
@@ -41,9 +41,9 @@ class AdditiveDTMGP(nn.Module):
         ## 2nd layer of DGP: input:[n, w1] size tensor, output:[n, w2] size tensor
         #################################################################################
         # return [n, m2] size tensor for [n, w1] size input and [m2, w1] size sparse grid
-        self.tmk2 = tmgp_additive(in_features=w1, n_level=5, design_class=design_class, kernel=kernel)
-        m2 = self.tmk2.out_features * w1
-        w2 = 8
+        self.tmk2 = tmgp_additive(in_features=w1, n_level=6, design_class=design_class, kernel=kernel)
+        m2 = self.tmk2.out_features
+        w2 = 16
         # return [n, w2] size tensor for [n, m2] size input and [m2, w2] size weights
         self.fc2 = LinearReparameterization(
             in_features=m2,
@@ -59,8 +59,8 @@ class AdditiveDTMGP(nn.Module):
         ## 3rd layer of DGP: input:[n, w2] size tensor, output:[n, w3] size tensor
         #################################################################################
         # return [n, m3] size tensor for [n, w2] size input and [m3, w2] size sparse grid
-        self.tmk3 = tmgp_additive(in_features=w2, n_level=5, design_class=design_class, kernel=kernel)
-        m3 = self.tmk3.out_features * w2
+        self.tmk3 = tmgp_additive(in_features=w2, n_level=6, design_class=design_class, kernel=kernel)
+        m3 = self.tmk3.out_features
         # return [n, w3] size tensor for [n, m3] size input and [m3, w3] size weights
         self.fc3 = LinearReparameterization(
             in_features=m3,
@@ -76,17 +76,14 @@ class AdditiveDTMGP(nn.Module):
         kl_sum = 0
 
         x = self.tmk1(x)
-        x = torch.flatten(x, 1)
         x, kl = self.fc1(x)
         kl_sum += kl
 
         x = self.tmk2(x)
-        x = torch.flatten(x, 1)
         x, kl = self.fc2(x)
         kl_sum += kl
 
         x = self.tmk3(x)
-        x = torch.flatten(x, 1)
         x, kl = self.fc3(x)
         kl_sum += kl
 
