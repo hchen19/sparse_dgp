@@ -1,9 +1,5 @@
-"""
-Tensor Markov Kernel activation function
-"""
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 from dtmgp.kernels.laplace_kernel import LaplaceProductKernel
 from dtmgp.layers.functional import MinMax
@@ -12,20 +8,34 @@ from dtmgp.utils.operators.chol_inv import mk_chol_inv, tmk_chol_inv
 
 
 class tmgp_sg(nn.Module):
-    def __init__(self, in_features, n_level=2,
-                 input_bd=None, design_class=HyperbolicCrossDesign,
+    """
+    Implements tensor markov GP as an activation layer using sparse grid structure.
+
+    .. math::
+
+        \begin{equation*}
+            k\left( \mathbf{x}, X^{SG} \right)R^{-1}
+        \end{equation*}
+
+    Args:
+        in_features (int): 
+            Size of each input sample.
+        n_level (int, optional): 
+            Level of sparse grid design. Default: `2`.
+        input_bd: 
+            Input bd. Default: `None`.
+        design_class (class, optional): 
+            Base design class of sparse grid. Default: `HyperbolicCrossDesign`.
+        kernel (class, optional): 
+            Kernel function of deep GP. Default: `LaplaceProductKernel(lengthscale=1.)`.
+    """
+
+    def __init__(self, in_features, 
+                 n_level=2,
+                 input_bd=None, 
+                 design_class=HyperbolicCrossDesign,
                  kernel=LaplaceProductKernel(lengthscale=1.),
                  ):
-        """
-        Implements tensor markov GP as an activation layer using sparse grid structure.
-
-        Parameters:
-            in_features: int -> size of each input sample,
-            n_level: int -> level of sparse grid design,
-            input_bd,
-            design_class: class -> design class of sparse grid,
-            kernel: class -> kernel function of deep GP
-        """
         super().__init__()
 
         self.kernel = kernel
@@ -48,16 +58,11 @@ class tmgp_sg(nn.Module):
 
     def forward(self, x):
         """
-        ------------------------
-        Parameters:
-        x: [n,d] size tensor, n is the number of the input, d is the dimension of the input
-        self.design_points: [m,d] size tensor, sparse grid points X^{SG} of dyadic sort
-        self.chol_inv: [m,m] size tensor, inverse of Cholesky decomposition of kernel(sparse_grid,sparse_grid),
-                stored in torch.sparse_coo_tensor format
+        Computes the tensor markov kernel of :math:`\mathbf x`.
 
-        ------------------------
-        Returns:
-        out: [n,m] size tensor, kernel(input, sparse_grid) @ chol_inv
+        :param x: [n,d] size tensor, n is the number of the input, d is the dimension of the input
+
+        :return: [n,m] size tensor, kernel(input, sparse_grid) @ chol_inv
         """
         x = self.scaler(x)
         k_star = self.kernel(x, self.design_points)  # [n, m] size tenosr
@@ -67,19 +72,32 @@ class tmgp_sg(nn.Module):
 
 
 class tmgp_additive(nn.Module):
+    """
+    Implements tensor markov GP as an activation layer using additive structure.
+
+    .. math::
+
+        \begin{equation*}
+            \left\{ k\left( x_i, X^{SG} \right)R^{-1} \right\}^{d}_{i=1}
+        \end{equation*}
+
+    Args:
+        in_features (int): 
+            Size of each input sample.
+        n_level (int, optional): 
+            Level of sparse grid design. Default: `2`.
+        input_bd: 
+            Input bd. Default: `None`.
+        design_class (class, optional): 
+            Base design class of sparse grid. Default: `HyperbolicCrossDesign`.
+        kernel (class, optional): 
+            Kernel function of deep GP. Default: `LaplaceProductKernel(lengthscale=1.)`.
+    """
+
     def __init__(self, in_features, n_level,
                  input_bd=None, design_class=HyperbolicCrossDesign,
                  kernel=LaplaceProductKernel(lengthscale=1.),
                  ):
-        """
-        Implements additive markov GP as an activation layer using additive structure
-
-        Parameters:
-            in_features: int -> size of each input sample,
-            input_bd,
-            design_class: class -> design class of sparse grid,
-            kernel: class -> kernel function of deep GP
-        """
         super().__init__()
 
         self.in_features = in_features
@@ -96,19 +114,13 @@ class tmgp_additive(nn.Module):
 
     def forward(self, x):
         """
-        Parameters:
-        ------------------------
-        x: [n,d=1] size tensor, n is the number of the input, d is the dimension of the input
-        self.design_points: [m,d=1] size tensor, sparse grid points X^{SG} of dyadic sort
-        self.chol_inv: [m,m] size tensor, inverse of Cholesky decomposition of kernel(sparse_grid,sparse_grid),
-                stored in torch.sparse_coo_tensor format
+        Computes the element-wise tensor markov kernel of :math:`\mathbf x`.
 
-        Returns:
-        ------------------------
-        out: [n,m] size tensor, kernel(input[:,dim], design_points) @ chol_inv
+        :param x: [n,d] size tensor, n is the number of the input, d is the dimension of the input
+
+        :return: [n,m*d] size tensor, kernel(input, sparse_grid) @ chol_inv
         """
         x = self.scaler(x)
-        x = torch.permute(x, (1,0))
         x = torch.flatten(x)
         k_star = self.kernel(x, self.design_points)  # [...,n, m] size tenosr
         phi = k_star @ self.chol_inv  # [..., n, m] size tensor

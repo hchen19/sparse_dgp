@@ -30,7 +30,6 @@
 
 import torch
 import torch.nn as nn
-import torch.distributions as distributions
 from itertools import repeat
 import collections
 
@@ -40,6 +39,18 @@ def get_kernel_size(x, n):
         return tuple(repeat(x, n))
 
 class BaseVariationalLayer_(nn.Module):
+    """
+    The base variational layer is implemented as a :class:`torch.nn.Module` that, when called on two distributions 
+    :math:`Q` and :math:`P` returns a :obj:`torch.Tensor` that represents the KL divergence between two gaussians 
+    :math:`\left( Q\parallel P \right)`.
+
+    .. math::
+
+        \begin{equation*}
+            D_{\text{KL}}\left( Q\parallel P \right)= \sum_{x\in \mathcal{X}}Q(x)\log\left( \frac{Q(x)}{P(x)} \right)
+        \end{equation*}
+    """
+
     def __init__(self):
         super().__init__()
         self._dnn_to_bnn_flag = False
@@ -56,13 +67,12 @@ class BaseVariationalLayer_(nn.Module):
         """
         Calculates kl divergence between two gaussians (Q || P)
 
-        Parameters:
-             * mu_q: torch.Tensor -> mu parameter of distribution Q
-             * sigma_q: torch.Tensor -> sigma parameter of distribution Q
-             * mu_p: float -> mu parameter of distribution P
-             * sigma_p: float -> sigma parameter of distribution P
+        :param mu_q: mean of distribution Q (torch.Tensor)
+        :sigma_q: deviation of distribution Q (torch.Tensor)
+        :mu_p: mean of distribution P (torch.Tensor)
+        :sigma_p: deviation of distribution P (torch.Tensor)
 
-        returns torch.Tensor of shape 0
+        :return: the KL divergence between Q and P.
         """
         kl = torch.log(sigma_p) - torch.log(
             sigma_q) + (sigma_q**2 + (mu_q - mu_p)**2) / (2 *

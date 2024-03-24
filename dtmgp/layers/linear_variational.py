@@ -53,6 +53,26 @@ from torch.quantization.qconfig import QConfig
 
 
 class LinearReparameterization(BaseVariationalLayer_):
+    """
+    Implements Linear layer with reparameterization trick. Inherits from bayesian_torch.layers.BaseVariationalLayer_
+
+    Args:
+        in_features (int): 
+            Size of each input sample.
+        out_features (int): 
+            Size of each output sample.
+        prior_mean (float, optional): 
+            Mean of the prior arbitrary distribution to be used on the complexity cost. Default: `0`.
+        prior_variance (float, optional): 
+            Variance of the prior arbitrary distribution to be used on the complexity cost. Default: `1.0`.
+        posterior_mu_init (float, optional): 
+            Initialized trainable mu parameter representing mean of the approximate posterior. Default: `0`.
+        posterior_rho_init (float, optional): 
+            Initialized trainable rho parameter representing the sigma of the approximate posterior through softplus function. Default: `-3.0`
+        bias (bool, optional): 
+            If set to False, the layer will not learn an additive bias. Default: `True`.
+    """
+
     def __init__(self,
                  in_features,
                  out_features,
@@ -61,20 +81,6 @@ class LinearReparameterization(BaseVariationalLayer_):
                  posterior_mu_init=0,
                  posterior_rho_init=-3.0,
                  bias=True):
-        """
-        Implements Linear layer with reparameterization trick.
-
-        Inherits from bayesian_torch.layers.BaseVariationalLayer_
-
-        Parameters:
-            in_features: int -> size of each input sample,
-            out_features: int -> size of each output sample,
-            prior_mean: float -> mean of the prior arbitrary distribution to be used on the complexity cost,
-            prior_variance: float -> variance of the prior arbitrary distribution to be used on the complexity cost,
-            posterior_mu_init: float -> init trainable mu parameter representing mean of the approximate posterior,
-            posterior_rho_init: float -> init trainable rho parameter representing the sigma of the approximate posterior through softplus function,
-            bias: bool -> if set to False, the layer will not learn an additive bias. Default: True,
-        """
         super(LinearReparameterization, self).__init__()
 
         self.in_features = in_features
