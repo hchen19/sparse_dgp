@@ -105,12 +105,12 @@ class tmgp_additive(nn.Module):
         self.scaler = MinMax()
 
         dyadic_design = design_class(dyadic_sort=True, return_neighbors=True)(deg=n_level, input_bd=input_bd)
-        chol_inv = mk_chol_inv(dyadic_design=dyadic_design, markov_kernel=kernel, upper=True)
-        design_points = dyadic_design.points.reshape(-1, 1)
+        chol_inv = mk_chol_inv(dyadic_design=dyadic_design, markov_kernel=kernel, upper=True) # [m, m] size tensor
+        design_points = dyadic_design.points.reshape(-1, 1) # [m, 1] size tensor
 
         self.register_buffer('design_points', design_points)  # [m,d] size tensor, sparse grid points X^{SG} of dyadic sort
         self.register_buffer('chol_inv', chol_inv)  # [m,m] size tensor, inverse of Cholesky decomposition of kernel(X^{SG},X^{SG})
-        self.out_features = design_points.shape[0] * in_features
+        self.out_features = design_points.shape[0] * in_features # m*d
 
     def forward(self, x):
         """
@@ -121,9 +121,10 @@ class tmgp_additive(nn.Module):
         :return: [n,m*d] size tensor, kernel(input, sparse_grid) @ chol_inv
         """
         x = self.scaler(x)
-        x = torch.flatten(x)
-        k_star = self.kernel(x, self.design_points)  # [...,n, m] size tenosr
-        phi = k_star @ self.chol_inv  # [..., n, m] size tensor
-        out = phi.reshape(-1, self.out_features)
+        x = torch.flatten(x, start_dim=-2, end_dim=-1) # flatten x of size [...,n,d] --> size [...,n*d]
+        x = x.unsqueeze(dim=-1)# add new dimension, x of size [...,n*d] --> size [...,n*d, 1]
+        k_star = self.kernel(x, self.design_points) # [...,n*d, m] size tenosr
+        phi = torch.matmul(k_star, self.chol_inv) # [..., n*d, m] size tensor
+        out = phi.reshape(*phi.shape[:-2], -1, self.out_features) # [..., n, m*d] size tensor
 
         return out
