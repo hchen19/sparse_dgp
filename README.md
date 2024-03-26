@@ -9,20 +9,21 @@ This repository is a Python implementation of algorithms in
 
 ## Examples
 ```bash
-$ python -m examples.bayesian_dtmgp_additive --inputdim [input_dim] 
-                                            --batch-size [batch_size]
-                                            --test-batch-size [test_batch_size]
-                                            --epochs [epochs]
-                                            --lr [learning_rate]
-                                            --gamma [learning_rate_step_gamma]
-                                            --no-cuda [disable_cuda]
-                                            --seed [random_seed]
-                                            --save_dir [save_directory]
-                                            --mode [train_test_mode]
-                                            --num_monte_carlo [num_monte_carlo_inference]
-                                            --num_mc [num_monte_carlo_training]
-                                            --tensorboard [tensorboard_action]
-                                            --log_dir [logs_directory]
+$ cd examples/test_data
+$ python bayesian_dtmgp_additive.py --inputdim [input_dim] 
+                                    --batch-size [batch_size]
+                                    --test-batch-size [test_batch_size]
+                                    --epochs [epochs]
+                                    --lr [learning_rate]
+                                    --gamma [learning_rate_step_gamma]
+                                    --no-cuda [disable_cuda]
+                                    --seed [random_seed]
+                                    --save_dir [save_directory]
+                                    --mode [train_test_mode]
+                                    --num_monte_carlo [num_monte_carlo_inference]
+                                    --num_mc [num_monte_carlo_training]
+                                    --tensorboard [tensorboard_action]
+                                    --log_dir [logs_directory]
 ```
 
 ### Arguments
