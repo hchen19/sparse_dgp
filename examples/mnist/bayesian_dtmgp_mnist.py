@@ -214,7 +214,7 @@ def main():
         os.makedirs(args.save_dir)
 
     
-    model = dtmgp.DTMGPmnist(input_dim=28 * 28,
+    model = dtmgp.DTMGPmnist(input_dim=784,
                              output_dim=10,
                              design_class=HyperbolicCrossDesign,
                              kernel=LaplaceProductKernel(lengthscale=1.),

@@ -39,8 +39,9 @@ class SCNN(nn.Module):
         self.dropout1 = nn.Dropout2d(0.25)
         self.dropout2 = nn.Dropout2d(0.5)
         self.fc1 = LinearReparameterization(
-            in_features=9216,
-            out_features=128,
+            # in_features=9216,
+            in_features=28*28,
+            out_features=1000,
             prior_mean=prior_mu,
             prior_variance=prior_sigma,
             posterior_mu_init=posterior_mu_init,
@@ -48,7 +49,7 @@ class SCNN(nn.Module):
         )
 
         self.fc2 = LinearReparameterization(
-            in_features=128,
+            in_features=1000,
             out_features=10,
             prior_mean=prior_mu,
             prior_variance=prior_sigma,
@@ -58,14 +59,14 @@ class SCNN(nn.Module):
 
     def forward(self, x):
         kl_sum = 0
-        x, kl = self.conv1(x)
-        kl_sum += kl
-        x = F.relu(x)
-        x, kl = self.conv2(x)
-        kl_sum += kl
-        x = F.relu(x)
-        x = F.max_pool2d(x, 2)
-        x = self.dropout1(x)
+        # x, kl = self.conv1(x)
+        # kl_sum += kl
+        # x = F.relu(x)
+        # x, kl = self.conv2(x)
+        # kl_sum += kl
+        # x = F.relu(x)
+        # x = F.max_pool2d(x, 2)
+        # x = self.dropout1(x)
         x = torch.flatten(x, 1)
         x, kl = self.fc1(x)
         kl_sum += kl
