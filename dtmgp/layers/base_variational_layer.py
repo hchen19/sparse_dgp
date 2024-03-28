@@ -38,7 +38,7 @@ def get_kernel_size(x, n):
             return tuple(x)
         return tuple(repeat(x, n))
 
-class BaseVariationalLayer_(nn.Module):
+class _BaseVariationalLayer(nn.Module):
     """
     The base variational layer is implemented as a :class:`torch.nn.Module` that, when called on two distributions 
     :math:`Q` and :math:`P` returns a :obj:`torch.Tensor` that represents the KL divergence between two gaussians 

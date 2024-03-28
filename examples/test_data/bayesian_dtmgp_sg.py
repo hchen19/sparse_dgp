@@ -49,7 +49,7 @@ class DTMGP:
 
         self.activation = activation
 
-        self.model = simple_dtmgp.SparsegridDTMGP(input_dim, output_dim, design_class, kernel).to(self.device)
+        self.model = simple_dtmgp.SDTMGPsg(input_dim, output_dim, design_class, kernel).to(self.device)
         self.reset_optimizer_scheduler() # do not delete this
 
     def reset_optimizer_scheduler(self,):

@@ -1,16 +1,16 @@
 from __future__ import print_function
 import os
 import argparse
+import numpy as np
+
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.tensorboard import SummaryWriter
-import numpy as np
-from scipy.special import softmax
-import dtmgp.models.dtmgp_add_large as dtmgp
+
+import dtmgp.models.mnist_dtmgp_add as dtmgp
 from dtmgp.utils.sparse_activation.design_class import HyperbolicCrossDesign
 from dtmgp.kernels.laplace_kernel import LaplaceProductKernel
 
@@ -214,11 +214,11 @@ def main():
         os.makedirs(args.save_dir)
 
     
-    model = dtmgp.AdditiveDTMGP(input_dim=28*28,
-                                output_dim=10,
-                                design_class=HyperbolicCrossDesign,
-                                kernel=LaplaceProductKernel(lengthscale=1.),
-                                )
+    model = dtmgp.DTMGPmnist(input_dim=28 * 28,
+                             output_dim=10,
+                             design_class=HyperbolicCrossDesign,
+                             kernel=LaplaceProductKernel(lengthscale=1.),
+                             )
     model = model.to(device)
 
     print(args.mode)

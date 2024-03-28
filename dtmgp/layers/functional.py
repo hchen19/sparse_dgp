@@ -5,6 +5,11 @@ wrapper for ReLU
 import torch.nn as nn
 import torch.nn.functional as F
 
+__all__ = [
+    'ReLU',
+    'MinMax',
+]
+
 
 class ReLU(nn.Module):
     """
@@ -68,7 +73,7 @@ class MinMax(nn.Module):
         :return: normalized data :math:`\mathbf x`.
         """
         if x.min() == x.max():
-            return self.lengthscale * x / x.max()
+            return x
         else:
             out = self.lengthscale * (x - x.min()) / (x.max() - x.min())
             return out

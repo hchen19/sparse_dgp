@@ -44,15 +44,14 @@ from __future__ import print_function
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn import Module, Parameter
-from .base_variational_layer import BaseVariationalLayer_
+from torch.nn import Parameter
+from .base_variational_layer import _BaseVariationalLayer
 
-import math
 from torch.quantization.observer import HistogramObserver, PerChannelMinMaxObserver, MinMaxObserver
 from torch.quantization.qconfig import QConfig
 
 
-class LinearReparameterization(BaseVariationalLayer_):
+class LinearReparameterization(_BaseVariationalLayer):
     """
     Implements Linear layer with reparameterization trick. Inherits from bayesian_torch.layers.BaseVariationalLayer_
 
@@ -124,15 +123,18 @@ class LinearReparameterization(BaseVariationalLayer_):
             self.register_buffer('eps_bias', None, persistent=False)
 
         self.init_parameters()
-        self.quant_prepare=False
+        self.quant_prepare = False
 
     def prepare(self):
         self.qint_quant = nn.ModuleList([torch.quantization.QuantStub(
-                                         QConfig(weight=MinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_tensor_symmetric), activation=MinMaxObserver.with_args(dtype=torch.qint8,qscheme=torch.per_tensor_symmetric))) for _ in range(5)])
+            QConfig(weight=MinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_tensor_symmetric),
+                    activation=MinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_tensor_symmetric))) for _
+            in range(5)])
         self.quint_quant = nn.ModuleList([torch.quantization.QuantStub(
-                                         QConfig(weight=MinMaxObserver.with_args(dtype=torch.quint8), activation=MinMaxObserver.with_args(dtype=torch.quint8))) for _ in range(2)])
+            QConfig(weight=MinMaxObserver.with_args(dtype=torch.quint8),
+                    activation=MinMaxObserver.with_args(dtype=torch.quint8))) for _ in range(2)])
         self.dequant = torch.quantization.DeQuantStub()
-        self.quant_prepare=True
+        self.quant_prepare = True
 
     def init_parameters(self):
         self.prior_weight_mu.fill_(self.prior_mean)
@@ -146,7 +148,7 @@ class LinearReparameterization(BaseVariationalLayer_):
             self.mu_bias.data.normal_(mean=self.posterior_mu_init[0], std=0.1)
             self.rho_bias.data.normal_(mean=self.posterior_rho_init[0],
                                        std=0.1)
-            
+
     def kl_loss(self):
         sigma_weight = torch.log1p(torch.exp(self.rho_weight))
         kl = self.kl_div(
@@ -159,7 +161,7 @@ class LinearReparameterization(BaseVariationalLayer_):
             kl += self.kl_div(self.mu_bias, sigma_bias,
                               self.prior_bias_mu, self.prior_bias_sigma)
         return kl
-    
+
     def forward(self, input, return_kl=True):
         if self.dnn_to_bnn_flag:
             return_kl = False
@@ -167,7 +169,6 @@ class LinearReparameterization(BaseVariationalLayer_):
         eps_weight = self.eps_weight.data.normal_()
         tmp_result = sigma_weight * eps_weight
         weight = self.mu_weight + tmp_result
-
 
         if return_kl:
             kl_weight = self.kl_div(self.mu_weight, sigma_weight,
@@ -184,17 +185,16 @@ class LinearReparameterization(BaseVariationalLayer_):
         out = F.linear(input, weight, bias)
 
         if self.quant_prepare:
-            # quint8 quantstub
-            input = self.quint_quant[0](input) # input
-            out = self.quint_quant[1](out) # output
+            # quint8 quantstrat
+            input = self.quint_quant[0](input)  # input
+            out = self.quint_quant[1](out)  # output
 
-            # qint8 quantstub
-            sigma_weight = self.qint_quant[0](sigma_weight) # weight
-            mu_weight = self.qint_quant[1](self.mu_weight) # weight
-            eps_weight = self.qint_quant[2](eps_weight) # random variable
-            tmp_result =self.qint_quant[3](tmp_result) # multiply activation
-            weight = self.qint_quant[4](weight) # add activatation
-
+            # qint8 quantstrat
+            sigma_weight = self.qint_quant[0](sigma_weight)  # weight
+            mu_weight = self.qint_quant[1](self.mu_weight)  # weight
+            eps_weight = self.qint_quant[2](eps_weight)  # random variable
+            tmp_result = self.qint_quant[3](tmp_result)  # multiply activation
+            weight = self.qint_quant[4](weight)  # add activation
 
         if return_kl:
             if self.mu_bias is not None:

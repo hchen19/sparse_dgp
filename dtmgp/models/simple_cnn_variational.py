@@ -1,11 +1,10 @@
 from __future__ import print_function
-import argparse
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from dtmgp.layers.conv_variational import Conv2dReparameterization
-from dtmgp.layers.linear_variational import LinearReparameterization
+from dtmgp.layers.conv import Conv2dReparameterization
+from dtmgp.layers.linear import LinearReparameterization
 
 prior_mu = 0.0
 prior_sigma = 1.0

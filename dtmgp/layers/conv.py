@@ -46,8 +46,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import Parameter
-from .base_variational_layer import BaseVariationalLayer_, get_kernel_size
-import math
+from .base_variational_layer import _BaseVariationalLayer, get_kernel_size
 from torch.quantization.observer import HistogramObserver, PerChannelMinMaxObserver, MinMaxObserver
 from torch.quantization.qconfig import QConfig
 
@@ -61,7 +60,7 @@ __all__ = [
 ]
 
 
-class Conv1dReparameterization(BaseVariationalLayer_):
+class Conv1dReparameterization(_BaseVariationalLayer):
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -227,7 +226,7 @@ class Conv1dReparameterization(BaseVariationalLayer_):
         return out
 
 
-class Conv2dReparameterization(BaseVariationalLayer_):
+class Conv2dReparameterization(_BaseVariationalLayer):
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -402,7 +401,7 @@ class Conv2dReparameterization(BaseVariationalLayer_):
         return out
 
 
-class Conv3dReparameterization(BaseVariationalLayer_):
+class Conv3dReparameterization(_BaseVariationalLayer):
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -574,7 +573,7 @@ class Conv3dReparameterization(BaseVariationalLayer_):
         return out
 
 
-class ConvTranspose1dReparameterization(BaseVariationalLayer_):
+class ConvTranspose1dReparameterization(_BaseVariationalLayer):
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -744,7 +743,7 @@ class ConvTranspose1dReparameterization(BaseVariationalLayer_):
         return out
 
 
-class ConvTranspose2dReparameterization(BaseVariationalLayer_):
+class ConvTranspose2dReparameterization(_BaseVariationalLayer):
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -919,7 +918,7 @@ class ConvTranspose2dReparameterization(BaseVariationalLayer_):
         return out
 
 
-class ConvTranspose3dReparameterization(BaseVariationalLayer_):
+class ConvTranspose3dReparameterization(_BaseVariationalLayer):
     def __init__(self,
                  in_channels,
                  out_channels,

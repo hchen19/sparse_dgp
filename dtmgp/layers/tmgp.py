@@ -6,8 +6,13 @@ from dtmgp.layers.functional import MinMax
 from dtmgp.utils.sparse_activation.design_class import HyperbolicCrossDesign, SparseGridDesign
 from dtmgp.utils.operators.chol_inv import mk_chol_inv, tmk_chol_inv
 
+__all__ = [
+    'SparseGridTMGP',
+    'AddTMGP',
+]
 
-class tmgp_sg(nn.Module):
+
+class SparseGridTMGP(nn.Module):
     """
     Implements tensor markov GP as an activation layer using sparse grid structure.
 
@@ -72,7 +77,7 @@ class tmgp_sg(nn.Module):
         return out
 
 
-class tmgp_additive(nn.Module):
+class AddTMGP(nn.Module):
     """
     Implements tensor markov GP as an activation layer using additive structure.
 
