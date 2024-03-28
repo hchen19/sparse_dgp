@@ -8,7 +8,7 @@ from dtmgp.utils.operators.chol_inv import mk_chol_inv, tmk_chol_inv
 
 __all__ = [
     'SparseGridTMGP',
-    'AddTMGP',
+    'AdditiveTMGP',
 ]
 
 
@@ -77,7 +77,7 @@ class SparseGridTMGP(nn.Module):
         return out
 
 
-class AddTMGP(nn.Module):
+class AdditiveTMGP(nn.Module):
     """
     Implements tensor markov GP as an activation layer using additive structure.
 

@@ -236,10 +236,10 @@ def main():
             scheduler.step()
 
             torch.save(model.state_dict(),
-                       args.save_dir + "/mnist_bayesian_scnn.pth")
+                       args.save_dir + "/mnist_bayesian_dtmgp.pth")
 
     elif args.mode == 'test':
-        checkpoint = args.save_dir + '/mnist_bayesian_scnn.pth'
+        checkpoint = args.save_dir + '/mnist_bayesian_dtmgp.pth'
         model.load_state_dict(torch.load(checkpoint))
         evaluate(args, model, device, test_loader)
 
