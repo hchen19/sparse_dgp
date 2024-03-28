@@ -12,8 +12,11 @@ posterior_rho_init = -3.0
 
 
 class AdditiveDTMGP(nn.Module):
-    def __init__(self, input_dim, output_dim,
-                 design_class, kernel,
+    def __init__(self, 
+                 input_dim, 
+                 output_dim,
+                 design_class, 
+                 kernel,
                  activation=None):
         super(AdditiveDTMGP, self).__init__()
 

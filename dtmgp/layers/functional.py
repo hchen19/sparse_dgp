@@ -68,7 +68,7 @@ class MinMax(nn.Module):
         :return: normalized data :math:`\mathbf x`.
         """
         if x.min() == x.max():
-            return x
+            return self.lengthscale * x / x.max()
         else:
             out = self.lengthscale * (x - x.min()) / (x.max() - x.min())
             return out
