@@ -1,5 +1,6 @@
 from __future__ import print_function
 import os
+import time
 import argparse
 
 import torch
@@ -144,7 +145,7 @@ def main():
     parser.add_argument('--save_dir',
                         type=str,
                         default='./checkpoint/bayesian')
-    parser.add_argument('--mode', type=str, required=True, help='train | test')
+    parser.add_argument('--mode', type=str, default='test', help='train | test')
     parser.add_argument(
         '--num_monte_carlo',
         type=int,
@@ -214,6 +215,7 @@ def main():
     model = simple_cnn.SCNN()
     model = model.to(device)
 
+    start = time.time()
     print(args.mode)
     if args.mode == 'train':
 
@@ -235,6 +237,9 @@ def main():
         checkpoint = args.save_dir + '/mnist_bayesian_scnn.pth'
         model.load_state_dict(torch.load(checkpoint))
         evaluate(args, model, device, test_loader)
+
+    end = time.time()
+    print("done. Total time: " + str(end - start))
 
 
 if __name__ == '__main__':

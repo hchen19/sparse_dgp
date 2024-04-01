@@ -1,5 +1,6 @@
 from __future__ import print_function
 import os
+import time
 import argparse
 import numpy as np
 
@@ -96,8 +97,8 @@ def evaluate(args, model, device, test_loader):
         pred_mean = np.mean(pred_probs_mc, axis=0)
         Y_pred = np.argmax(pred_mean, axis=1)
         print('Test accuracy:', (Y_pred == target_labels).mean() * 100)
-        np.save('./probs_mnist_mc.npy', pred_probs_mc)
-        np.save('./mnist_test_labels_mc.npy', target_labels)
+        np.save('./probs_mnist_dtmgp_mc.npy', pred_probs_mc)
+        np.save('./mnist_test_labels_dtmgp_mc.npy', target_labels)
 
 
 def main():
@@ -146,7 +147,7 @@ def main():
     parser.add_argument('--save_dir',
                         type=str,
                         default='./checkpoint/bayesian')
-    parser.add_argument('--mode', type=str, required=True, help='train | test')
+    parser.add_argument('--mode', type=str, default='train', help='train | test')
     parser.add_argument(
         '--num_monte_carlo',
         type=int,
@@ -221,6 +222,7 @@ def main():
                              )
     model = model.to(device)
 
+    start = time.time()
     print(args.mode)
     if args.mode == 'train':
 
@@ -243,6 +245,8 @@ def main():
         model.load_state_dict(torch.load(checkpoint))
         evaluate(args, model, device, test_loader)
 
+    end = time.time()
+    print("done. Total time: " + str(end - start))
 
 if __name__ == '__main__':
     main()
