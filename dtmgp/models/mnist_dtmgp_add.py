@@ -47,7 +47,7 @@ class DTMGPmnist(nn.Module):
         self.dropout = nn.Dropout2d(0.25)
 
         self.fc0 = LinearReparameterization(
-            in_features=2304,
+            in_features=input_dim,#2304,
             out_features=100,
             prior_mean=prior_mu,
             prior_variance=prior_sigma,
@@ -94,14 +94,16 @@ class DTMGPmnist(nn.Module):
 
     def forward(self, x):
         kl_sum = 0
-        x, kl = self.conv1(x)
-        kl_sum += kl
-        x = F.relu(x)
-        x, kl = self.conv2(x)
-        kl_sum += kl
-        x = F.relu(x)
-        x = F.max_pool2d(x, 2)
-        x = self.dropout(x)
+        
+        # x, kl = self.conv1(x)
+        # kl_sum += kl
+        # x = F.relu(x)
+        # x, kl = self.conv2(x)
+        # kl_sum += kl
+        # x = F.relu(x)
+        # x = F.max_pool2d(x, 2)
+        # x = self.dropout(x)
+
         x = torch.flatten(x, 1)
         x, kl = self.fc0(x)
         kl_sum += kl

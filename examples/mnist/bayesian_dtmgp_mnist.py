@@ -1,5 +1,10 @@
 from __future__ import print_function
 import os
+import sys
+from pathlib import Path # if you haven't already done so
+file = Path(os.path.dirname(os.path.abspath(__file__))).resolve()
+parent, root = file.parent, file.parents[1]
+sys.path.append(str(root))
 import time
 import argparse
 import numpy as np
