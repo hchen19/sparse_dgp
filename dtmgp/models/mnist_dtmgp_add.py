@@ -12,42 +12,19 @@ posterior_mu_init = 0.0
 posterior_rho_init = -3.0
 
 
-class DTMGPmnist(nn.Module):
+class DtmgpAdditive(nn.Module):
     def __init__(self, 
                  input_dim, 
                  output_dim,
                  design_class, 
                  kernel,
                  activation=None):
-        super(DTMGPmnist, self).__init__()
+        super(DtmgpAdditive, self).__init__()
 
         self.activation = activation
 
-        self.conv1 = Conv2dReparameterization(
-            in_channels=1,
-            out_channels=8,
-            kernel_size=3,
-            stride=1,
-            prior_mean=prior_mu,
-            prior_variance=prior_sigma,
-            posterior_mu_init=posterior_mu_init,
-            posterior_rho_init=posterior_rho_init,
-        )
-
-        self.conv2 = Conv2dReparameterization(
-            in_channels=8,
-            out_channels=16,
-            kernel_size=3,
-            stride=1,
-            prior_mean=prior_mu,
-            prior_variance=prior_sigma,
-            posterior_mu_init=posterior_mu_init,
-            posterior_rho_init=posterior_rho_init,
-        )
-        self.dropout = nn.Dropout2d(0.25)
-
         self.fc0 = LinearReparameterization(
-            in_features=input_dim,#2304,
+            in_features=input_dim,
             out_features=100,
             prior_mean=prior_mu,
             prior_variance=prior_sigma,
@@ -94,15 +71,6 @@ class DTMGPmnist(nn.Module):
 
     def forward(self, x):
         kl_sum = 0
-        
-        # x, kl = self.conv1(x)
-        # kl_sum += kl
-        # x = F.relu(x)
-        # x, kl = self.conv2(x)
-        # kl_sum += kl
-        # x = F.relu(x)
-        # x = F.max_pool2d(x, 2)
-        # x = self.dropout(x)
 
         x = torch.flatten(x, 1)
         x, kl = self.fc0(x)

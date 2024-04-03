@@ -1,7 +1,8 @@
 from __future__ import print_function
 import os
 import sys
-from pathlib import Path # if you haven't already done so
+from pathlib import Path  # if you haven't already done so
+
 file = Path(os.path.dirname(os.path.abspath(__file__))).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
@@ -16,7 +17,7 @@ from torchvision import datasets, transforms
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.tensorboard import SummaryWriter
 
-import dtmgp.models.mnist_dtmgp_add as dtmgp
+from dtmgp.models import DtmgpAdditive, DtmgpSparsegrid
 from dtmgp.utils.sparse_activation.design_class import HyperbolicCrossDesign
 from dtmgp.kernels.laplace_kernel import LaplaceProductKernel
 
@@ -38,7 +39,7 @@ def train(args, model, device, train_loader, optimizer, epoch, tb_writer=None):
         output = torch.mean(torch.stack(output_), dim=0)
         kl = torch.mean(torch.stack(kl_), dim=0)
         nll_loss = F.nll_loss(output, target)
-        #ELBO loss
+        # ELBO loss
         loss = nll_loss + (kl / args.batch_size)
 
         loss.backward()
@@ -47,7 +48,7 @@ def train(args, model, device, train_loader, optimizer, epoch, tb_writer=None):
         if batch_idx % args.log_interval == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
-                100. * batch_idx / len(train_loader), loss.item()))
+                       100. * batch_idx / len(train_loader), loss.item()))
 
         if tb_writer is not None:
             tb_writer.add_scalar('train/loss', loss.item(), epoch)
@@ -63,7 +64,7 @@ def test(args, model, device, test_loader, epoch, tb_writer=None):
             data, target = data.to(device), target.to(device)
             output, kl = model(data)
             test_loss += F.nll_loss(output, target, reduction='sum').item() + (
-                kl / args.batch_size)  # sum up batch loss
+                    kl / args.batch_size)  # sum up batch loss
             pred = output.argmax(
                 dim=1,
                 keepdim=True)  # get the index of the max log-probability
@@ -94,7 +95,7 @@ def evaluate(args, model, device, test_loader):
             for mc_run in range(args.num_monte_carlo):
                 model.eval()
                 output, _ = model.forward(data)
-                #get probabilities from log-prob
+                # get probabilities from log-prob
                 pred_probs = torch.exp(output)
                 pred_probs_mc.append(pred_probs.cpu().data.numpy())
 
@@ -109,6 +110,10 @@ def evaluate(args, model, device, test_loader):
 def main():
     # Training settings
     parser = argparse.ArgumentParser(description='PyTorch MNIST Example')
+    parser.add_argument('--model',
+                        type=str,
+                        default='grid',
+                        help='additive | grid')
     parser.add_argument('--batch-size',
                         type=int,
                         default=64,
@@ -140,42 +145,39 @@ def main():
                         help='disables CUDA training')
     parser.add_argument('--seed',
                         type=int,
-                        default=1,
+                        default=10,
                         metavar='S',
                         help='random seed (default: 1)')
-    parser.add_argument(
-        '--log-interval',
-        type=int,
-        default=10,
-        metavar='N',
-        help='how many batches to wait before logging training status')
+    parser.add_argument('--log-interval',
+                        type=int,
+                        default=10,
+                        metavar='N',
+                        help='how many batches to wait before logging training status')
     parser.add_argument('--save_dir',
                         type=str,
                         default='./checkpoint/bayesian')
-    parser.add_argument('--mode', type=str, default='train', help='train | test')
-    parser.add_argument(
-        '--num_monte_carlo',
-        type=int,
-        default=20,
-        metavar='N',
-        help='number of Monte Carlo samples to be drawn for inference')
+    parser.add_argument('--mode',
+                        type=str,
+                        default='train',
+                        help='train | test')
+    parser.add_argument('--num_monte_carlo',
+                        type=int,
+                        default=20,
+                        metavar='N',
+                        help='number of Monte Carlo samples to be drawn for inference')
     parser.add_argument('--num_mc',
                         type=int,
                         default=1,
                         metavar='N',
                         help='number of Monte Carlo runs during training')
-    parser.add_argument(
-        '--tensorboard',
-        action="store_true",
-        help=
-        'use tensorboard for logging and visualization of training progress')
-    parser.add_argument(
-        '--log_dir',
-        type=str,
-        default='./logs/mnist/bayesian',
-        metavar='N',
-        help=
-        'use tensorboard for logging and visualization of training progress')
+    parser.add_argument('--tensorboard',
+                        action="store_true",
+                        help='use tensorboard for logging and visualization of training progress')
+    parser.add_argument('--log_dir',
+                        type=str,
+                        default='./logs/mnist/bayesian',
+                        metavar='N',
+                        help='use tensorboard for logging and visualization of training progress')
 
     args = parser.parse_args()
     use_cuda = not args.no_cuda and torch.cuda.is_available()
@@ -200,32 +202,35 @@ def main():
         download=True,
         transform=transforms.Compose([
             transforms.ToTensor(),
-            transforms.Normalize((0.1307, ), (0.3081, ))
+            transforms.Normalize((0.1307,), (0.3081,))
         ])),
-                                               batch_size=args.batch_size,
-                                               shuffle=True,
-                                               **kwargs)
+        batch_size=args.batch_size,
+        shuffle=True,
+        **kwargs)
     test_loader = torch.utils.data.DataLoader(datasets.MNIST(
         '../data',
         train=False,
         transform=transforms.Compose([
             transforms.ToTensor(),
-            transforms.Normalize((0.1307, ), (0.3081, ))
+            transforms.Normalize((0.1307,), (0.3081,))
         ])),
-                                              batch_size=args.test_batch_size,
-                                              shuffle=False,
-                                              **kwargs)
+        batch_size=args.test_batch_size,
+        shuffle=False,
+        **kwargs)
 
     if not os.path.exists(args.save_dir):
         os.makedirs(args.save_dir)
 
-    
-    model = dtmgp.DTMGPmnist(input_dim=784,
-                             output_dim=10,
-                             design_class=HyperbolicCrossDesign,
-                             kernel=LaplaceProductKernel(lengthscale=1.),
-                             )
-    model = model.to(device)
+    if args.model == 'additive':
+        model = DtmgpAdditive(input_dim=784,
+                              output_dim=10,
+                              design_class=HyperbolicCrossDesign,
+                              kernel=LaplaceProductKernel(1.)).to(device)
+    elif args.model == 'grid':
+        model = DtmgpSparsegrid(input_dim=784,
+                                output_dim=10,
+                                design_class=HyperbolicCrossDesign,
+                                kernel=LaplaceProductKernel(1.)).to(device)
 
     start = time.time()
     print(args.mode)
@@ -242,16 +247,24 @@ def main():
             test(args, model, device, test_loader, epoch, tb_writer)
             scheduler.step()
 
-            torch.save(model.state_dict(),
-                       args.save_dir + "/mnist_bayesian_dtmgp.pth")
+            if args.model == 'grid':
+                torch.save(model.state_dict(),
+                           args.save_dir + "/mnist_bayesian_dtmgp_sg.pth")
+            elif args.model == 'additive':
+                torch.save(model.state_dict(),
+                           args.save_dir + "/mnist_bayesian_dtmgp.pth")
 
     elif args.mode == 'test':
-        checkpoint = args.save_dir + '/mnist_bayesian_dtmgp.pth'
+        if args.model == 'grid':
+            checkpoint = args.save_dir + '/mnist_bayesian_dtmgp_sg.pth'
+        elif args.model == 'additive':
+            checkpoint = args.save_dir + '/mnist_bayesian_dtmgp.pth'
         model.load_state_dict(torch.load(checkpoint))
         evaluate(args, model, device, test_loader)
 
     end = time.time()
     print("done. Total time: " + str(end - start))
+
 
 if __name__ == '__main__':
     main()

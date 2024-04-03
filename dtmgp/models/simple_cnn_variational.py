@@ -17,7 +17,7 @@ class SCNN(nn.Module):
         super(SCNN, self).__init__()
         self.conv1 = Conv2dReparameterization(
             in_channels=1,
-            out_channels=16,
+            out_channels=8,
             kernel_size=3,
             stride=1,
             prior_mean=prior_mu,
@@ -27,8 +27,8 @@ class SCNN(nn.Module):
         )
 
         self.conv2 = Conv2dReparameterization(
-            in_channels=16,
-            out_channels=32,
+            in_channels=8,
+            out_channels=16,
             kernel_size=3,
             stride=1,
             prior_mean=prior_mu,
@@ -39,7 +39,7 @@ class SCNN(nn.Module):
         self.dropout1 = nn.Dropout2d(0.25)
         self.dropout2 = nn.Dropout2d(0.5)
         self.fc1 = LinearReparameterization(
-            in_features=4608,
+            in_features=2304,
             out_features=1000,
             prior_mean=prior_mu,
             prior_variance=prior_sigma,
