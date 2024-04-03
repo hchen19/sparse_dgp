@@ -25,7 +25,7 @@ class DtmgpSparsegrid(nn.Module):
 
         self.fc0 = LinearReparameterization(
             in_features=input_dim,
-            out_features=64,
+            out_features=8,
             prior_mean=prior_mu,
             prior_variance=prior_sigma,
             posterior_mu_init=posterior_mu_init,
@@ -37,9 +37,9 @@ class DtmgpSparsegrid(nn.Module):
         ## 1st layer of DGP: input:[n, input_dim] size tensor, output:[n, w1] size tensor
         #################################################################################
         # return [n, m1] size tensor for [n, input_dim] size input and [m1, input_dim] size sparse grid
-        self.tmk1 = AdditiveTMGP(in_features=64, n_level=4, design_class=design_class, kernel=kernel)
+        self.tmk1 = AdditiveTMGP(in_features=8, n_level=3, design_class=design_class, kernel=kernel)
         m1 = self.tmk1.out_features
-        w1 = 16
+        w1 = 8
         # return [n, w1] size tensor for [n, m1] size input and [m1, w1] size weights
         self.fc1 = LinearReparameterization(
             in_features=m1,
@@ -55,7 +55,7 @@ class DtmgpSparsegrid(nn.Module):
         ## 2nd layer of DGP: input:[n, w1] size tensor, output:[n, w2] size tensor
         #################################################################################
         # return [n, m2] size tensor for [n, w1] size input and [m2, w1] size sparse grid
-        self.tmk2 = SparseGridTMGP(in_features=w1, n_level=2, design_class=design_class, kernel=kernel)
+        self.tmk2 = SparseGridTMGP(in_features=w1, n_level=3, design_class=design_class, kernel=kernel)
         m2 = self.tmk2.out_features
         w2 = output_dim
         # return [n, w2] size tensor for [n, m2] size input and [m2, w2] size weights
