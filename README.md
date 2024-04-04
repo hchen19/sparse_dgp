@@ -1,5 +1,5 @@
 # Sparse Deep GPs
-This repository is a Python implementation of algorithms in 
+This repository is a Python implementation of sparse deep GP algorithms in PyTorch.
 ## Datasets
 
 ## Models
