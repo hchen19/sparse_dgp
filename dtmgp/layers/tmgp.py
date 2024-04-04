@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 from dtmgp.kernels.laplace_kernel import LaplaceProductKernel
 from dtmgp.layers.functional import MinMax
@@ -129,7 +130,8 @@ class AdditiveTMGP(nn.Module):
 
         :return: [n,m*d] size tensor, kernel(input, sparse_grid) @ chol_inv
         """
-        x = self.scaler(x)
+
+        x = F.normalize(x) # x = self.scaler(x)
         x = torch.flatten(x, start_dim=1) # flatten x of size [...,n,d] --> size [...,n*d]
         x = x.unsqueeze(dim=-1) # add new dimension, x of size [...,n*d] --> size [...,n*d, 1]
         x = self.kernel(x, self.design_points) # [...,n*d, m] size tenosr

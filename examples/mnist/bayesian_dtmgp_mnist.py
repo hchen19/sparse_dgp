@@ -252,13 +252,13 @@ def main():
                            args.save_dir + "/mnist_bayesian_dtmgp_sg.pth")
             elif args.model == 'additive':
                 torch.save(model.state_dict(),
-                           args.save_dir + "/mnist_bayesian_dtmgp.pth")
+                           args.save_dir + "/mnist_bayesian_dtmgp_add.pth")
 
     elif args.mode == 'test':
         if args.model == 'grid':
             checkpoint = args.save_dir + '/mnist_bayesian_dtmgp_sg.pth'
         elif args.model == 'additive':
-            checkpoint = args.save_dir + '/mnist_bayesian_dtmgp.pth'
+            checkpoint = args.save_dir + '/mnist_bayesian_dtmgp_add.pth'
         model.load_state_dict(torch.load(checkpoint))
         evaluate(args, model, device, test_loader)
 

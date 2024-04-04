@@ -37,7 +37,7 @@ class DtmgpSparsegrid(nn.Module):
         ## 1st layer of DGP: input:[n, input_dim] size tensor, output:[n, w1] size tensor
         #################################################################################
         # return [n, m1] size tensor for [n, input_dim] size input and [m1, input_dim] size sparse grid
-        self.tmk1 = AdditiveTMGP(in_features=8, n_level=3, design_class=design_class, kernel=kernel)
+        self.tmk1 = SparseGridTMGP(in_features=8, n_level=3, design_class=design_class, kernel=kernel)
         m1 = self.tmk1.out_features
         w1 = 8
         # return [n, w1] size tensor for [n, m1] size input and [m1, w1] size weights
