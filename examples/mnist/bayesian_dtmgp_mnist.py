@@ -9,6 +9,7 @@ sys.path.append(str(root))
 import time
 import argparse
 import numpy as np
+import matplotlib.pyplot as plt
 
 import torch
 import torch.nn.functional as F
@@ -84,7 +85,7 @@ def test(args, model, device, test_loader, epoch, tb_writer=None):
         tb_writer.flush()
 
 
-def evaluate(args, model, device, test_loader):
+def evaluate(args, model, device, test_loader, barplot):
     pred_probs_mc = []
     test_loss = 0
     correct = 0
@@ -101,11 +102,53 @@ def evaluate(args, model, device, test_loader):
 
         target_labels = target.cpu().data.numpy()
         pred_mean = np.mean(pred_probs_mc, axis=0)
+        pred_std = np.std(pred_probs_mc, axis=0)
         Y_pred = np.argmax(pred_mean, axis=1)
         print('Test accuracy:', (Y_pred == target_labels).mean() * 100)
         np.save('./probs_mnist_dtmgp_mc.npy', pred_probs_mc)
         np.save('./mnist_test_labels_dtmgp_mc.npy', target_labels)
 
+        # plot some randomly selected examples
+        # To plot the errorbar, set "--num_monte_carlo 100" or the higher values in argument would be recommended
+        if barplot:    
+            num_examples = 10
+            # randomly select [num_samples]-size indices from torch.arange(0,len_testset) without replacement 
+            indices = torch.randperm(data.shape[0])[:num_examples]
+            
+            # data is [len_testset, 1, 28, 28] size tensor
+            # target is [len_testset] size tensor
+            data_examples = data[indices,:,:,:] # [num_examples, 1, 28, 28] size tensor
+            target_examples = target[indices] # [num_examples] size tensor
+
+            pred_mean_examples = pred_mean[indices,:] # [num_examples, 10] size tensor
+            pred_std_examples = pred_std[indices,:] # [num_examples, 10] size tensor
+
+            for i in range(num_examples):
+                fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(12, 12))
+                
+                # plot true digits
+                axes[0].imshow(data_examples[i,0,:,:],  cmap='gray', interpolation='nearest')
+                
+                # plot bar chart with std over digits 0,...,9
+                axes[1].bar(np.arange(10), pred_mean_examples[i,:], color='lightblue')
+                axes[1].errorbar(np.arange(10), pred_mean_examples[i,:], yerr=pred_std_examples[i,:],
+                                 fmt='.', color='red', elinewidth=2, capthick=10, errorevery=1, 
+                                 alpha=0.5, ms=4, capsize = 2 )
+                axes[1].set_xlabel('digits', fontsize=20)
+                axes[1].set_ylabel('digits prob', fontsize=20)
+                axes[1].tick_params(labelsize=20)
+
+                # major ticks every 1, minor ticks every 5
+                xmajor_ticks = np.arange(0, 10, 1)
+                ymajor_ticks = np.arange(0, 1.1, 0.1)
+
+                axes[1].set_xticks(xmajor_ticks)
+                axes[1].set_yticks(ymajor_ticks)
+                axes[1].grid(which='both', linestyle='--', linewidth=1.5)
+                
+                plt.close(fig)
+                # save the full figure
+                fig.savefig(f'./figures/barplots/barplot_{i}.png')
 
 def main():
     # Training settings
@@ -114,6 +157,11 @@ def main():
                         type=str,
                         default='grid',
                         help='additive | grid')
+    # plotting the barplots is only run in "--mode test"
+    parser.add_argument('--barplot',
+                        type=bool,
+                        default=True,
+                        help='if plot the errorbar')
     parser.add_argument('--batch-size',
                         type=int,
                         default=64,
@@ -260,7 +308,7 @@ def main():
         elif args.model == 'additive':
             checkpoint = args.save_dir + '/mnist_bayesian_dtmgp_add.pth'
         model.load_state_dict(torch.load(checkpoint))
-        evaluate(args, model, device, test_loader)
+        evaluate(args, model, device, test_loader, args.barplot)
 
     end = time.time()
     print("done. Total time: " + str(end - start))
