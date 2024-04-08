@@ -59,6 +59,12 @@ $ python bayesian_dtmgp_mnist.py --model additive --mode test --num_monte_carlo 
 ```
 
 ## References
-1. Ding, Liang, Rui Tuo, and Shahin Shahrampour. [A Sparse Expansion For Deep Gaussian Processes](https://www.tandfonline.com/doi/pdf/10.1080/24725854.2023.2210629). IISE Transactions (2023): 1-14. [Code](https://github.com/ldingaa/DGP_Sparse_Expansion) in MATLAB version.
-2. Agarwal, Rishabh, et al. [Neural additive models: Interpretable machine learning with neural nets](https://proceedings.neurips.cc/paper/2021/file/251bd0442dfcc53b5a761e050f8022b8-Paper.pdf). Advances in neural information processing systems 34 (2021): 4699-4711.
-3. Zhang, Wei, Brian Barr, and John Paisley. [Gaussian Process Neural Additive Models](https://arxiv.org/pdf/2402.12518.pdf). AAAI Conference on Artificial Intelligence (2024)
+### GP
+1. Liang Ding, Rui Tuo, and Shahin Shahrampour. [A Sparse Expansion For Deep Gaussian Processes](https://www.tandfonline.com/doi/pdf/10.1080/24725854.2023.2210629). IISE Transactions (2023): 1-14. [Code](https://github.com/ldingaa/DGP_Sparse_Expansion) in MATLAB version.
+2. Rishabh Agarwal, et al. [Neural Additive Models: Interpretable Machine Learning with Neural Nets](https://proceedings.neurips.cc/paper/2021/file/251bd0442dfcc53b5a761e050f8022b8-Paper.pdf). Advances in neural information processing systems 34 (2021): 4699-4711.
+3. Wei Zhang, Brian Barr, and John Paisley. [Gaussian Process Neural Additive Models](https://arxiv.org/pdf/2402.12518.pdf). AAAI Conference on Artificial Intelligence (2024)
+
+### UQ
+1. Charlie Hewitt. [Confidence measures for CNN classification using Gaussian processes](https://chewitt.me/Papers/CTH-CNN-Conf-2018.pdf). (2018)
+2. Yaniv Romano, Matteo Sesia, and Emmanuel Candes. [Classification with Valid and Adaptive Coverage](https://proceedings.neurips.cc/paper/2020/file/244edd7e85dc81602b7615cd705545f5-Paper.pdf). Advances in Neural Information Processing Systems 33 (2020): 3581-3591.
+3. Anastasios Angelopoulos, Stephen Bates, Jitendra Malik, and Michael I. Jordan. [Uncertainty Sets for Image Classifiers using Conformal Prediction](https://openreview.net/pdf?id=eNdiU_DbM9). ICLR (2021). [[Blog]](https://people.eecs.berkeley.edu/~angelopoulos/blog/posts/conformal-classification/)  [[Code]](https://github.com/aangelopoulos/conformal_classification)
