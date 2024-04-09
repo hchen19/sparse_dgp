@@ -18,7 +18,7 @@ from torchvision import datasets, transforms
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.tensorboard import SummaryWriter
 
-from dtmgp.models import DtmgpAdditive, DtmgpSparsegrid
+from dtmgp.models import DAMGPmnist, DTMGPmnist
 from dtmgp.utils.sparse_activation.design_class import HyperbolicCrossDesign
 from dtmgp.kernels.laplace_kernel import LaplaceProductKernel
 
@@ -270,15 +270,15 @@ def main():
         os.makedirs(args.save_dir)
 
     if args.model == 'additive':
-        model = DtmgpAdditive(input_dim=784,
-                              output_dim=10,
-                              design_class=HyperbolicCrossDesign,
-                              kernel=LaplaceProductKernel(1.)).to(device)
+        model = DAMGPmnist(input_dim=784,
+                           output_dim=10,
+                           design_class=HyperbolicCrossDesign,
+                           kernel=LaplaceProductKernel(1.)).to(device)
     elif args.model == 'grid':
-        model = DtmgpSparsegrid(input_dim=784,
-                                output_dim=10,
-                                design_class=HyperbolicCrossDesign,
-                                kernel=LaplaceProductKernel(1.)).to(device)
+        model = DTMGPmnist(input_dim=784,
+                           output_dim=10,
+                           design_class=HyperbolicCrossDesign,
+                           kernel=LaplaceProductKernel(1.)).to(device)
 
     start = time.time()
     print(args.mode)

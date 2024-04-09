@@ -8,12 +8,12 @@ from dtmgp.utils.sparse_activation.design_class import HyperbolicCrossDesign, Sp
 from dtmgp.utils.operators.chol_inv import mk_chol_inv, tmk_chol_inv
 
 __all__ = [
-    'SparseGridTMGP',
-    'AdditiveTMGP',
+    'TMGP',
+    'AMGP',
 ]
 
 
-class SparseGridTMGP(nn.Module):
+class TMGP(nn.Module):
     """
     Implements tensor markov GP as an activation layer using sparse grid structure.
 
@@ -78,7 +78,7 @@ class SparseGridTMGP(nn.Module):
         return out
 
 
-class AdditiveTMGP(nn.Module):
+class AMGP(nn.Module):
     """
     Implements tensor markov GP as an activation layer using additive structure.
 

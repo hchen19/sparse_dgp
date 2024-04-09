@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from dtmgp.layers import LinearReparameterization
-from dtmgp.layers import AdditiveTMGP, SparseGridTMGP
+from dtmgp.layers import AMGP, TMGP
 
 prior_mu = 0.0
 prior_sigma = 1.0
@@ -12,14 +12,14 @@ posterior_mu_init = 0.0
 posterior_rho_init = -3.0
 
 
-class DtmgpSparsegrid(nn.Module):
+class DTMGPmnist(nn.Module):
     def __init__(self,
                  input_dim,
                  output_dim,
                  design_class,
                  kernel,
                  activation=None):
-        super(DtmgpSparsegrid, self).__init__()
+        super(DTMGPmnist, self).__init__()
 
         self.activation = activation
 
@@ -37,7 +37,7 @@ class DtmgpSparsegrid(nn.Module):
         ## 1st layer of DGP: input:[n, input_dim] size tensor, output:[n, w1] size tensor
         #################################################################################
         # return [n, m1] size tensor for [n, input_dim] size input and [m1, input_dim] size sparse grid
-        self.tmk1 = SparseGridTMGP(in_features=8, n_level=3, design_class=design_class, kernel=kernel)
+        self.tmk1 = TMGP(in_features=8, n_level=3, design_class=design_class, kernel=kernel)
         m1 = self.tmk1.out_features
         w1 = 8
         # return [n, w1] size tensor for [n, m1] size input and [m1, w1] size weights
@@ -55,7 +55,7 @@ class DtmgpSparsegrid(nn.Module):
         ## 2nd layer of DGP: input:[n, w1] size tensor, output:[n, w2] size tensor
         #################################################################################
         # return [n, m2] size tensor for [n, w1] size input and [m2, w1] size sparse grid
-        self.tmk2 = SparseGridTMGP(in_features=w1, n_level=3, design_class=design_class, kernel=kernel)
+        self.tmk2 = TMGP(in_features=w1, n_level=3, design_class=design_class, kernel=kernel)
         m2 = self.tmk2.out_features
         w2 = output_dim
         # return [n, w2] size tensor for [n, m2] size input and [m2, w2] size weights
