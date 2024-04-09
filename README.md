@@ -7,14 +7,19 @@ This repository is a Python implementation of sparse deep GP algorithms in PyTor
 ## Models
 
 ### Deep GPs with sparse grid
+Two-dimensional level-2 SG (left), level-3 SG (middle) and level-4 SG (right) design:
+![Sparse grid](assets/sparsegrid.png)
 
+Hidden layer architecture of Deep TMGP:
+![Tensor Markov GP designed with sparse grid](assets/TMGP.png)
 
 ### Deep GPs with additive model
+Hidden layer architecture of Deep Additive Markov GP (AMGP):
+![AMGP](assets/AMGP.png)
 
 ## Usage
 
 ## Examples
-### MNIST
 ```bash
 $ cd examples/mnist
 $ python bayesian_dtmgp_mnist.py --model [additive_grid_model]
