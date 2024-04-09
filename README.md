@@ -1,10 +1,13 @@
 # Sparse Deep GPs
 This repository is a Python implementation of sparse deep GP algorithms in PyTorch.
+
 ## Datasets
-### [MNIST](https://yann.lecun.com/exdb/mnist/)
+[MNIST](https://pytorch.org/vision/0.17/generated/torchvision.datasets.MNIST.html)
 
 ## Models
+
 ### Deep GPs with sparse grid
+
 
 ### Deep GPs with additive model
 
