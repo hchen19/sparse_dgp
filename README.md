@@ -23,26 +23,28 @@ Hidden layer architecture of Deep Additive Markov GP (AMGP):
 ```bash
 $ cd examples/mnist
 $ python bayesian_dtmgp_mnist.py --model [additive_grid_model]
-                                --barplot [plot_errorbar]
-                                --batch-size [batch_size]
-                                --test-batch-size [test_batch_size]
-                                --epochs [epochs]
-                                --lr [learning_rate]
-                                --gamma [learning_rate_step_gamma]
-                                --no-cuda [disable_cuda]
-                                --seed [random_seed]
-                                --log-interval [num_batches_log]
-                                --save_dir [save_directory]
-                                --mode [train_test_mode]
-                                --num_monte_carlo [num_monte_carlo_inference]
-                                --num_mc [num_monte_carlo_training]
-                                --tensorboard [tensorboard_action]
-                                --log_dir [logs_directory]
+                                 --error-bar [plot_errorbar]
+                                 --subset-size [training_subset]
+                                 --batch-size [batch_size]
+                                 --test-batch-size [test_batch_size]
+                                 --epochs [epochs]
+                                 --lr [learning_rate]
+                                 --gamma [learning_rate_step_gamma]
+                                 --no-cuda [disable_cuda]
+                                 --seed [random_seed]
+                                 --log-interval [num_batches_log]
+                                 --save_dir [save_directory]
+                                 --mode [train_test_mode]
+                                 --num_monte_carlo [num_monte_carlo_inference]
+                                 --num_mc [num_monte_carlo_training]
+                                 --tensorboard [tensorboard_action]
+                                 --log_dir [logs_directory]
 ```
 
 ### Arguments
-- `--model`: 'additive' or 'grid' (default: 'grid')
-- `--barplot`: plot the errorbar of some examples, run in `--mode test` mode (default: True)
+- `--model`: 'additive' or 'grid' (default: 'additive')
+- `--error-bar`: plot the error bar of some examples, run in `--mode test` mode (default: True)
+- `--subset-size`: Train with a subset of the dataset (default: 60000)
 - `--batch-size`: Input batch size for training (default: 64)
 - `--test-batch-size`: Input batch size for testing (default: 10000)
 - `--epochs`: 'Number of epochs to train (default: 14)
@@ -63,7 +65,7 @@ $ python bayesian_dtmgp_mnist.py --model [additive_grid_model]
 ```bash
 $ cd examples/mnist
 $ python bayesian_dtmgp_mnist.py --model additive --mode train
-$ python bayesian_dtmgp_mnist.py --model additive --mode test --num_monte_carlo 100 --barplot True
+$ python bayesian_dtmgp_mnist.py --model additive --mode test --num_monte_carlo 100 --error-bar True
 ```
 
 ## References
