@@ -1,5 +1,11 @@
 from __future__ import print_function
 import os
+import sys
+from pathlib import Path  # if you haven't already done so
+
+file = Path(os.path.dirname(os.path.abspath(__file__))).resolve()
+parent, root = file.parent, file.parents[1]
+sys.path.append(str(root))
 import time
 import argparse
 
@@ -9,6 +15,7 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.tensorboard import SummaryWriter
+from torch.utils.data import DataLoader, Subset, SubsetRandomSampler
 
 import numpy as np
 import dtmgp.models.simple_cnn_variational as simple_cnn
@@ -102,6 +109,15 @@ def evaluate(args, model, device, test_loader):
 def main():
     # Training settings
     parser = argparse.ArgumentParser(description='PyTorch MNIST Example')
+    parser.add_argument('--error-bar',
+                        type=bool,
+                        default=True,
+                        help='plot the error bar')
+    parser.add_argument('--subset-size',
+                        type=int,
+                        default=60000,
+                        metavar='N',
+                        help='the size of the training subset')
     parser.add_argument('--batch-size',
                         type=int,
                         default=64,
@@ -145,7 +161,7 @@ def main():
     parser.add_argument('--save_dir',
                         type=str,
                         default='./checkpoint/bayesian')
-    parser.add_argument('--mode', type=str, default='test', help='train | test')
+    parser.add_argument('--mode', type=str, default='train', help='train | test')
     parser.add_argument(
         '--num_monte_carlo',
         type=int,
@@ -187,17 +203,34 @@ def main():
             os.makedirs(logger_dir)
 
         tb_writer = SummaryWriter(logger_dir)
-    train_loader = torch.utils.data.DataLoader(datasets.MNIST(
-        '../data',
-        train=True,
-        download=True,
-        transform=transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize((0.1307, ), (0.3081, ))
-        ])),
-                                               batch_size=args.batch_size,
-                                               shuffle=True,
-                                               **kwargs)
+
+    transform = transforms.Compose([transforms.ToTensor(),
+                                    transforms.Normalize((0.1307,), (0.3081,))
+                                    ])
+    mnist_dataset = datasets.MNIST('../data', train=True, download=True, transform=transform)
+
+    # Create a subset of the MNIST dataset
+    if args.subset_size < len_trainset:
+        subset_size = args.subset_size
+        subset_indices = torch.randperm(len(mnist_dataset))[:subset_size]
+        subset_mnist = Subset(mnist_dataset, subset_indices)
+
+        # Create the subset DataLoader
+        train_loader = DataLoader(subset_mnist, batch_size=args.batch_size, shuffle=True, **kwargs)
+
+    else:
+        train_loader = torch.utils.data.DataLoader(datasets.MNIST(
+            '../data',
+            train=True,
+            download=True,
+            transform=transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize((0.1307,), (0.3081,))
+            ])),
+            batch_size=args.batch_size,
+            shuffle=True,
+            **kwargs)
+
     test_loader = torch.utils.data.DataLoader(datasets.MNIST(
         '../data',
         train=False,

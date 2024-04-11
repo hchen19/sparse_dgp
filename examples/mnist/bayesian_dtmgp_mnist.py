@@ -250,6 +250,7 @@ def main():
 
         tb_writer = SummaryWriter(logger_dir)
 
+    # Prepare MNIST dataset
     transform = transforms.Compose([transforms.ToTensor(),
                                     transforms.Normalize((0.1307,), (0.3081,))
                                     ])
