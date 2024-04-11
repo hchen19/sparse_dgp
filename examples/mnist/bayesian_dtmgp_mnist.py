@@ -17,6 +17,7 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.tensorboard import SummaryWriter
+from torch.utils.data import DataLoader, Subset, SubsetRandomSampler
 
 from dtmgp.models import DAMGPmnist, DTMGPmnist
 from dtmgp.utils.sparse_activation.design_class import HyperbolicCrossDesign
@@ -117,8 +118,8 @@ def evaluate(args, model, device, test_loader, barplot):
             
             # data is [len_testset, 1, 28, 28] size tensor
             # target is [len_testset] size tensor
-            data_examples = data[indices,:,:,:] # [num_examples, 1, 28, 28] size tensor
-            target_examples = target[indices] # [num_examples] size tensor
+            data_examples = data[indices,:,:,:].cpu() # [num_examples, 1, 28, 28] size tensor
+            target_examples = target[indices].cpu() # [num_examples] size tensor
 
             pred_mean_examples = pred_mean[indices,:] # [num_examples, 10] size tensor
             pred_std_examples = pred_std[indices,:] # [num_examples, 10] size tensor
@@ -155,13 +156,17 @@ def main():
     parser = argparse.ArgumentParser(description='PyTorch MNIST Example')
     parser.add_argument('--model',
                         type=str,
-                        default='grid',
+                        default='additive',
                         help='additive | grid')
-    # plotting the barplots is only run in "--mode test"
-    parser.add_argument('--barplot',
+    parser.add_argument('--error-bar',
                         type=bool,
                         default=True,
-                        help='if plot the errorbar')
+                        help='plot the error bar')
+    parser.add_argument('--subset-size',
+                        type=int,
+                        default=60000,
+                        metavar='N',
+                        help='the size of the training subset')
     parser.add_argument('--batch-size',
                         type=int,
                         default=64,
@@ -244,17 +249,34 @@ def main():
             os.makedirs(logger_dir)
 
         tb_writer = SummaryWriter(logger_dir)
-    train_loader = torch.utils.data.DataLoader(datasets.MNIST(
-        '../data',
-        train=True,
-        download=True,
-        transform=transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize((0.1307,), (0.3081,))
-        ])),
-        batch_size=args.batch_size,
-        shuffle=True,
-        **kwargs)
+
+    transform = transforms.Compose([transforms.ToTensor(),
+                                    transforms.Normalize((0.1307,), (0.3081,))
+                                    ])
+    mnist_dataset = datasets.MNIST('../data', train=True, download=True, transform=transform)
+
+    # Create a subset of the MNIST dataset
+    if args.subset_size < len_trainset:
+        subset_size = args.subset_size
+        subset_indices = torch.randperm(len(mnist_dataset))[:subset_size]
+        subset_mnist = Subset(mnist_dataset, subset_indices)
+
+        # Create the subset DataLoader
+        train_loader = DataLoader(subset_mnist, batch_size=args.batch_size, shuffle=True, **kwargs)
+
+    else:
+        train_loader = torch.utils.data.DataLoader(datasets.MNIST(
+            '../data',
+            train=True,
+            download=True,
+            transform=transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize((0.1307,), (0.3081,))
+            ])),
+            batch_size=args.batch_size,
+            shuffle=True,
+            **kwargs)
+
     test_loader = torch.utils.data.DataLoader(datasets.MNIST(
         '../data',
         train=False,
@@ -308,7 +330,7 @@ def main():
         elif args.model == 'additive':
             checkpoint = args.save_dir + '/mnist_bayesian_dtmgp_add.pth'
         model.load_state_dict(torch.load(checkpoint))
-        evaluate(args, model, device, test_loader, args.barplot)
+        evaluate(args, model, device, test_loader, args.error_bar)
 
     end = time.time()
     print("done. Total time: " + str(end - start))
