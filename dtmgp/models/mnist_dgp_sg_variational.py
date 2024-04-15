@@ -75,6 +75,7 @@ class DTMGPmnist(nn.Module):
         x = torch.flatten(x, 1)
         x, kl = self.fc0(x)
         kl_sum += kl
+        # x = F.relu(x)
 
         x = self.tmk1(x)
         x, kl = self.fc1(x)
