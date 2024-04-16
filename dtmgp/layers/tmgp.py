@@ -46,7 +46,7 @@ class TMGP(nn.Module):
         super().__init__()
 
         self.kernel = kernel
-        self.scaler = MinMax()
+        self.minmax = MinMax()
 
         if in_features == 1:  # one-dimension TMGP
             dyadic_design = design_class(dyadic_sort=True, return_neighbors=True)(deg=n_level, input_bd=input_bd)
@@ -73,7 +73,7 @@ class TMGP(nn.Module):
 
         :return: [n,m] size tensor, kernel(input, sparse_grid) @ chol_inv
         """
-        x = self.scaler(x)
+        x = self.minmax(x)
         x = self.kernel(x, self.design_points)  # [n, m] size tenosr
         out = x @ self.chol_inv  # [n, m] size tensor
 
@@ -114,7 +114,7 @@ class AMGP(nn.Module):
 
         self.in_features = in_features
         self.kernel = kernel
-        self.scaler = MinMax()
+        self.minmax = MinMax()
 
         dyadic_design = design_class(dyadic_sort=True, return_neighbors=True)(deg=n_level, input_bd=input_bd)
         chol_inv = mk_chol_inv(dyadic_design=dyadic_design, markov_kernel=kernel, upper=True)  # [m, m] size tensor
@@ -135,7 +135,7 @@ class AMGP(nn.Module):
         :return: [n,m*d] size tensor, kernel(input, sparse_grid) @ chol_inv
         """
 
-        x = F.normalize(x)  # x = self.scaler(x)
+        x = F.normalize(x)  # x = self.minmax(x)
         x = torch.flatten(x, start_dim=1)  # flatten x of size [...,n,d] --> size [...,n*d]
         x = x.unsqueeze(dim=-1)  # add new dimension, x of size [...,n*d] --> size [...,n*d, 1]
         x = self.kernel(x, self.design_points)  # [...,n*d, m] size tenosr
