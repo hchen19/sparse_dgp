@@ -55,6 +55,8 @@ class ReLUN(nn.Module):
             can optionally do the operation in-place. It should be a [d] size tensor. Default: `False`.
     """
 
+    __constants__ = ['inplace']
+
     def __init__(self, upper=1, inplace=False):
         super(ReLUN, self).__init__()
         self.inplace = inplace
