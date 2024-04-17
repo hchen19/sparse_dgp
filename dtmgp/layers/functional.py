@@ -1,6 +1,3 @@
-'''
-wrapper for ReLU
-'''
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -32,9 +29,9 @@ class ReLU(nn.Module):
         super(ReLU, self).__init__()
         self.inplace = inplace
 
-    def forward(self, input):
+    def forward(self, x):
         kl = 0
-        return F.relu(input[0], inplace=self.inplace), kl
+        return F.relu(x[0], inplace=self.inplace), kl
 
     def extra_repr(self):
         inplace_str = 'inplace=True' if self.inplace else ''
@@ -63,10 +60,10 @@ class ReLUN(nn.Module):
         self.inplace = inplace
         self.upper = upper
 
-    def forward(self, input):
-        ub = torch.ones_like(input, dtype=input.dtype, device=input.device) * self.upper
-        input = torch.min(input, ub)
-        return F.relu(input, inplace=self.inplace)
+    def forward(self, x):
+        ub = torch.ones_like(x, dtype=x.dtype, device=x.device) * self.upper
+        x = torch.min(x, ub)
+        return F.relu(x, inplace=self.inplace)
 
     def extra_repr(self):
         inplace_str = 'inplace=True' if self.inplace else ''
@@ -102,7 +99,7 @@ class MinMax(nn.Module):
         """
         Computes the Min-Max normalization of :math:`\mathbf x`.
 
-        :param x1: data to be normalized ([n, d] size tensor).
+        :param x: data to be normalized ([n, d] size tensor).
         
         :return: normalized data :math:`\mathbf x`.
         """
