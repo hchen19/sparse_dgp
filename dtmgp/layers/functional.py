@@ -1,7 +1,7 @@
 '''
 wrapper for ReLU
 '''
-
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -35,6 +35,38 @@ class ReLU(nn.Module):
     def forward(self, input):
         kl = 0
         return F.relu(input[0], inplace=self.inplace), kl
+
+    def extra_repr(self):
+        inplace_str = 'inplace=True' if self.inplace else ''
+        return inplace_str
+
+
+class ReLUN(nn.Module):
+    """
+    Implement ReLU-N activation used in BNN.
+
+    .. math::
+
+        \begin{equation*}
+            \text{ReLU-N}(x)=\min\left( \max\left( 0,x \right),N \right)
+        \end{equation*}
+
+    Args:
+        upper (float, optional):
+            Set this if you want a customized upper bound of ReLU. Default: `1.0`.
+        inplace (bool, optional):
+            can optionally do the operation in-place. It should be a [d] size tensor. Default: `False`.
+    """
+
+    def __init__(self, upper=1, inplace=False):
+        super(ReLUN, self).__init__()
+        self.inplace = inplace
+        self.upper = upper
+
+    def forward(self, input):
+        ub = torch.ones_like(input, dtype=input.dtype, device=input.device) * self.upper
+        input = torch.min(input, ub)
+        return F.relu(input, inplace=self.inplace)
 
     def extra_repr(self):
         inplace_str = 'inplace=True' if self.inplace else ''
