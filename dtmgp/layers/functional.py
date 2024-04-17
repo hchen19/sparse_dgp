@@ -74,12 +74,12 @@ class MinMax(nn.Module):
         
         :return: normalized data :math:`\mathbf x`.
         """
-        if (x.max() - x.min()) < self.eps:
-            out = x / x.max() + self.bias
-        else:
+        if (x.max() - x.min()) > self.eps:
             out = self.lengthscale * (x - x.min()) / (x.max() - x.min()) + self.bias
+        else:
+            out = x / x.max() + self.bias
         return out
 
 
-def relu(input, lengthscale=1., bias=0., eps=1e-05):
+def minmax(input, lengthscale=1., bias=0., eps=1e-05):
     return MinMax(lengthscale, bias, eps)(input)
