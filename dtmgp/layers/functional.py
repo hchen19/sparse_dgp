@@ -59,10 +59,12 @@ class MinMax(nn.Module):
         bias (float, optional):
             Set this if you want a customized bias. Default: `None`.
     """
-    def __init__(self, lengthscale=1., bias=None):
+
+    def __init__(self, lengthscale=1., bias=0., eps=1e-05):
         super().__init__()
         self.lengthscale = lengthscale
         self.bias = bias
+        self.eps = eps
 
     def forward(self, x):
         """
@@ -72,8 +74,12 @@ class MinMax(nn.Module):
         
         :return: normalized data :math:`\mathbf x`.
         """
-        if x.min() == x.max():
-            return x
+        if (x.max() - x.min()) < self.eps:
+            out = x / x.max() + self.bias
         else:
-            out = self.lengthscale * (x - x.min()) / (x.max() - x.min())
-            return out
+            out = self.lengthscale * (x - x.min()) / (x.max() - x.min()) + self.bias
+        return out
+
+
+def relu(input, lengthscale=1., bias=0., eps=1e-05):
+    return MinMax(lengthscale, bias, eps)(input)

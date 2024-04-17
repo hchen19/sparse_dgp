@@ -4,3 +4,16 @@ from .functional import ReLU, MinMax
 from .tmgp import TMGP, AMGP
 from .conv import Conv1dReparameterization, Conv2dReparameterization, Conv3dReparameterization, \
     ConvTranspose1dReparameterization, ConvTranspose2dReparameterization, ConvTranspose3dReparameterization
+from . import functional
+
+__all__ = [
+    "LinearReparameterization",
+    "TMGP",
+    "AMGP",
+    "Conv1dReparameterization",
+    "Conv2dReparameterization",
+    "Conv3dReparameterization",
+    "ConvTranspose1dReparameterization",
+    "ConvTranspose2dReparameterization",
+    "ConvTranspose3dReparameterization",
+]
