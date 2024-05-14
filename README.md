@@ -1,6 +1,9 @@
 # Sparse Deep GPs
 This repository is a Python implementation of sparse deep GP algorithms in PyTorch.
 
+## Documentation
+[https://sparse-dgp.readthedocs.io/](https://sparse-dgp.readthedocs.io/)
+
 ## Datasets
 [MNIST](https://pytorch.org/vision/0.17/generated/torchvision.datasets.MNIST.html)
 
