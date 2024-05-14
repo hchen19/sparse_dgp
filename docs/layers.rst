@@ -14,15 +14,20 @@ One-layer Markov GP
 :hidden:`AdditiveMarkovGP`
 ~~~~~~~~~~~~~~~~~
 
-.. autoclass:: AMGP # dtmgp/layers/tmgp.py
+.. autoclass:: tmgp.AMGP # dtmgp/layers/tmgp.py
    :members:
+   :private-members:
+   :special-members:
 
 
 :hidden:`TensorMarkovGP`
 ~~~~~~~~~~~~~~~~~
 
-.. autoclass:: TMGP # dtmgp/layers/tmgp.py
+.. autoclass:: tmgp.TMGP # dtmgp/layers/tmgp.py
    :members:
+   :private-members:
+   :special-members:
+
 
 
 Base Variational Layer
@@ -31,7 +36,7 @@ Base Variational Layer
 :hidden:`_BaseVariationalLayer`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: _BaseVariationalLayer # dtmgp/layers/base_variational_layer.py
+.. autoclass:: base_variational_layer._BaseVariationalLayer # dtmgp/layers/base_variational_layer.py
    :members:
 
 
@@ -41,8 +46,11 @@ Linear Layer
 :hidden:`LinearReparameterization`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: LinearReparameterization # dtmgp/layers/linear.py
+.. autoclass:: linear.LinearReparameterization # dtmgp/layers/linear.py
    :members:
+   :private-members:
+   :special-members:
+
 
 
 Convolutional Layer
@@ -51,38 +59,56 @@ Convolutional Layer
 :hidden:`Conv1dReparameterization`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: Conv1dReparameterization # dtmgp/layers/conv.py
+.. autoclass:: conv.Conv1dReparameterization # dtmgp/layers/conv.py
    :members:
+   :private-members:
+   :special-members:
+
 
 :hidden:`Conv2dReparameterization`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: Conv2dReparameterization # dtmgp/layers/conv.py
+.. autoclass:: conv.Conv2dReparameterization # dtmgp/layers/conv.py
    :members:
+   :private-members:
+   :special-members:
+
 
 :hidden:`Conv3dReparameterization`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: Conv3dReparameterization# dtmgp/layers/conv.py
+.. autoclass:: conv.Conv3dReparameterization# dtmgp/layers/conv.py
    :members:
+   :private-members:
+   :special-members:
+
 
 :hidden:`ConvTranspose1dReparameterization`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: ConvTranspose1dReparameterization # dtmgp/layers/conv.py
+.. autoclass:: conv.ConvTranspose1dReparameterization # dtmgp/layers/conv.py
    :members:
+   :private-members:
+   :special-members:
+
 
 :hidden:`ConvTranspose2dReparameterization`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: ConvTranspose2dReparameterization # dtmgp/layers/conv.py
+.. autoclass:: conv.ConvTranspose2dReparameterization # dtmgp/layers/conv.py
    :members:
+   :private-members:
+   :special-members:
+
 
 :hidden:`ConvTranspose3dReparameterization`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: ConvTranspose3dReparameterization # dtmgp/layers/conv.py
+.. autoclass:: conv.ConvTranspose3dReparameterization # dtmgp/layers/conv.py
    :members:
+   :private-members:
+   :special-members:
+
 
 
 Activation Function
@@ -91,14 +117,20 @@ Activation Function
 :hidden:`ReLU`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: ReLU # dtmgp/layers/functional.py
+.. autoclass:: functional.ReLU # dtmgp/layers/functional.py
    :members:
+   :private-members:
+   :special-members:
+
 
 :hidden:`ReLUN`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: ReLUN # dtmgp/layers/functional.py
+.. autoclass:: functional.ReLUN # dtmgp/layers/functional.py
    :members:
+   :private-members:
+   :special-members:
+
 
 
 Normalization Function
@@ -107,5 +139,7 @@ Normalization Function
 :hidden:`MinMax`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: MinMax # dtmgp/layers/functional.py
+.. autoclass:: functional.MinMax # dtmgp/layers/functional.py
    :members:
+   :private-members:
+   :special-members:

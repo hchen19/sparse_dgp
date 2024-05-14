@@ -31,9 +31,9 @@ SparseDeepGP's documentation
    :maxdepth: 1
    :caption: API
 
-   models.rst
    layers.rst
    kernels.rst
+   models.rst
    utils.rst
 
 
