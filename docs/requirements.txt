@@ -68,9 +68,9 @@ sympy==1.12
 tensorboard==2.16.2
 tensorboard-data-server==0.7.2
 tomli==2.0.1
-torch==2.3.0.dev20240219
-torchaudio==2.2.0.dev20240219
-torchvision==0.18.0.dev20240219
+torch==2.3.0
+torchaudio==2.2.0
+torchvision==0.18.0
 tornado==6.4
 traitlets==5.14.1
 typing_extensions==4.10.0rc1
