@@ -39,7 +39,7 @@ def get_kernel_size(x, n):
         return tuple(repeat(x, n))
 
 class _BaseVariationalLayer(nn.Module):
-    """
+    r"""
     The base variational layer is implemented as a :class:`torch.nn.Module` that, when called on two distributions 
     :math:`Q` and :math:`P` returns a :obj:`torch.Tensor` that represents the KL divergence between two gaussians 
     :math:`\left( Q\parallel P \right)`.
@@ -64,13 +64,17 @@ class _BaseVariationalLayer(nn.Module):
         self._dnn_to_bnn_flag = value
 
     def kl_div(self, mu_q, sigma_q, mu_p, sigma_p):
-        """
+        r"""
         Calculates kl divergence between two gaussians (Q || P)
 
-        :param mu_q: mean of distribution Q (torch.Tensor)
-        :sigma_q: deviation of distribution Q (torch.Tensor)
-        :mu_p: mean of distribution P (torch.Tensor)
-        :sigma_p: deviation of distribution P (torch.Tensor)
+        :param mu_q: mean of distribution Q
+        :type mu_q: torch.Tensor
+        :sigma_q: deviation of distribution Q
+        :type sigma_q: torch.Tensor
+        :mu_p: mean of distribution P
+        :type mu_p: torch.Tensor
+        :sigma_p: deviation of distribution P
+        :type sigma_p: torch.Tensor
 
         :return: the KL divergence between Q and P.
         """

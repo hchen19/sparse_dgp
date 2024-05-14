@@ -7,30 +7,24 @@ class HyperbolicCrossDesign:
                  dyadic_sort: Optional[bool] = True, 
                  return_neighbors: Optional[bool] = False) -> None:
         """
-        ------------------------
-        Parameters:
-        dyadic_sort: if sort=True, return sorted incremental tensor, default=True
-        return_neighbors: whether to return the neighbors of dyadic_points
-                Default = False
-        
-        ------------------------
-        Returns:
-        None
+        :param dyadic_sort: if sort=`True`, return sorted incremental tensor. (Default=`True`.)
+        :type dyadic_sort: bool
+        :param return_neighbors: whether to return the neighbors of dyadic_points. (Default=`False`.)
+        :type return_neighbors: bool
         """
         self.dyadic_sort = dyadic_sort
         self.return_neighbors = return_neighbors
     
     def __call__(self, deg, input_bd = None):
         """
-        ------------------------
-        Parameters:
-        deg: degree of hyperbolic cross (# of points = 2^deg - 1)
-        input_bd: [x_leftbd, x_rightbd], [2] size list
+        :param deg: degree of hyperbolic cross (# of points = 2^deg - 1)
+        :type deg: int
+        :param input_bd: [x_leftbd, x_rightbd]. (Default=`[0,1]`.)
+        :type input_bd: list, [2]-size
 
-        ------------------------
-        Returns:
-        pts: [1/(2^deg), 2/(2^deg), 3/(2^deg),..., (2^deg-1)/(2^deg)]
-            [2^deg-1] size tensor with hyperbolic cross points (bisection)        
+        :return: pts: [1/(2^deg), 2/(2^deg), 3/(2^deg),..., (2^deg-1)/(2^deg)]
+            [2^deg-1] size tensor with hyperbolic cross points (bisection)
+        :rtype: torch.Tensor.float       
         """
         if input_bd is None:
             input_bd = [0,1]
@@ -98,16 +92,15 @@ class HyperbolicCrossDesign:
 
 class SparseGridDesign:
     """
-    ------------------------
-    Parameters:
-    d: dimension of input, d >= 2
-    eta: level of sparse grid design
-    design_fun: design used in one dimension, default = hc_design (Here we assume the sparse grid design is the same in each dimension)
-    input_bd: [d,2] size list, default value = [[0,1]]*d
+    :param d: dimension of input, d >= 2
+    :type d: int
+    :param eta: level of sparse grid design, eta
+    :type eta: int
+    :param design_fun: design used in one dimension. Here we assume the sparse grid design is the same in each dimension. (Default = `hc_design`.)
+    :param input_bd: boundary for d-dimensional input. (Default: `[[0,1]]*d`)
+    :type input_bd: list, [d,2]-size
 
-    ------------------------
-    Returns:
-    self: an object with sparse grid design
+    :return: (self) an object with sparse grid design
     """
 
     def __init__(self, d, eta=None, 
@@ -217,16 +210,10 @@ def n_sum_k(n, k):
     https://www.mathworks.com/matlabcentral/fileexchange/28340-nsumk
     https://en.wikipedia.org/wiki/Stars_and_bars_(combinatorics)
 
-    ------------------------
-    Parameters:
-    ------------------------
-    n: # of positive integer
-    k: sum of the integers = k
+    :param n: # of positive integer
+    :param k: sum of the integers = k
 
-    ------------------------
-    Returns:
-    ------------------------
-    a tensor of all possible combinations of n positive integers adding up to a given number k 
+    :return: a tensor of all possible combinations of n positive integers adding up to a given number k 
     """
     if n == 1:
         return torch.tensor( [[k]] )

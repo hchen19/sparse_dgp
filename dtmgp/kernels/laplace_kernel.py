@@ -5,7 +5,7 @@ from torch import Tensor
 
 
 class LaplaceProductKernel(torch.nn.Module):
-    """
+    r"""
     Computes a covariance matrix based on the Laplace product kernel 
     between inputs :math:`\mathbf{x_1}` and :math:`\mathbf{x_2}`:
 
@@ -18,9 +18,8 @@ class LaplaceProductKernel(torch.nn.Module):
     
     where :math:`\theta` is the lengthscale parameter.
 
-    Args:
-        lengthscale (torch.Tensor, optional):
-            Set this if you want a customized lengthscale. It should be a [d] size tensor. Default: `None`.
+    
+    :param lengthscale: Set this if you want a customized lengthscale. It should be a [d] size tensor. Default: `None` = d.
     """
 
     def __init__(self, lengthscale=None):
@@ -29,13 +28,15 @@ class LaplaceProductKernel(torch.nn.Module):
 
     def forward(self, x1: Tensor, x2: Optional[Tensor] = None, 
                 diag: bool = False, **params) -> Tensor:
-        """
+        r"""
         Computes the covariance between :math:`\mathbf x_1` and :math:`\mathbf x_2`.
         
-        :param x1: First set of data ([n, d] size tensor).
-        :param x2: Second set of data ([m, d] size tensor).
-        :param diag: Should the kernel compute the whole kernel, or just the diag?
-            If True, it must be the case that `x1 == x2`. (Default: False.)
+        :param x1: First set of data.
+        :type x1: n x d torch.Tensor.float
+        :param x2: Second set of data.
+        :type x2: m x d torch.Tensor.float
+        :param diag: Should the kernel compute the whole kernel, or just the diag? If `True`, it must be the case that `x1 == x2`. (Default: `False`.)
+        :type x1: bool, optional
         
         :return: the kernel matrix or vector. The shape depends on the kernel's evaluation mode:
 
@@ -92,7 +93,7 @@ class LaplaceProductKernel(torch.nn.Module):
 
 
 class LaplaceAdditiveKernel(torch.nn.Module):
-    """
+    r"""
     Computes a covariance matrix based on the Laplace additive kernel 
     between inputs :math:`\mathbf{x_1}` and :math:`\mathbf{x_2}`:
 
@@ -104,9 +105,8 @@ class LaplaceAdditiveKernel(torch.nn.Module):
     
     where :math:`\theta` is the lengthscale parameter.
 
-    Args:
-        lengthscale (torch.Tensor, optional):
-            Set this if you want a customized lengthscale. It should be a [d] size tensor. Default: `None`.
+    :param lengthscale: Set this if you want a customized lengthscale. It should be a [d] size tensor. (Default: `None` = d.)
+    :type lengthscale: float or torch.Tensor.float, optional
     """
     def __init__(self, lengthscale=None):
         super().__init__()
@@ -117,11 +117,13 @@ class LaplaceAdditiveKernel(torch.nn.Module):
         """
         Computes the covariance between :math:`\mathbf x_1` and :math:`\mathbf x_2`.
         
-        :param x1: First set of data ([n, d] size tensor).
-        :param x2: Second set of data ([m, d] size tensor).
-        :param diag: Should the kernel compute the whole kernel, or just the diag?
-            If True, it must be the case that `x1 == x2`. (Default: False.)
-        
+        :param x1: First set of data.
+        :type x1: n x d torch.Tensor.float
+        :param x2: Second set of data.
+        :type x2: m x d torch.Tensor.float
+        :param diag: Should the kernel compute the whole kernel, or just the diag? If `True`, it must be the case that `x1 == x2`. (Default: `False`.)
+        :type x1: bool, optional
+
         :return: the kernel matrix or vector. The shape depends on the kernel's evaluation mode:
 
             * 'full_covar`: `n x m`

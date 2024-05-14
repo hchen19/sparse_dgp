@@ -18,9 +18,9 @@ class ReLU(nn.Module):
             \text{ReLU}(x)=(x)^{+}=\max\left( 0,x \right)
         \end{equation*}
 
-    Args:
-        inplace (bool, optional):
-            can optionally do the operation in-place. It should be a [d] size tensor. Default: `False`.
+    
+    :param inplace: can optionally do the operation in-place. It should be a [d] size tensor. (Default: `False`.)
+    :type inplace: bool, optional
     """
 
     __constants__ = ['inplace']
@@ -48,11 +48,10 @@ class ReLUN(nn.Module):
             \text{ReLU-N}(x)=\min\left( \max\left( 0,x \right),N \right)
         \end{equation*}
 
-    Args:
-        upper (float, optional):
-            Set this if you want a customized upper bound of ReLU. Default: `1.0`.
-        inplace (bool, optional):
-            can optionally do the operation in-place. It should be a [d] size tensor. Default: `False`.
+    :param upper: Set this if you want a customized upper bound of ReLU. (Default: `1.0`.)
+    :type upper: float, optional
+    :param inplace: can optionally do the operation in-place. It should be a [d] size tensor. (Default: `False`.)
+    :type inplace: bool, optional
     """
 
     __constants__ = ['inplace']
@@ -84,11 +83,10 @@ class MinMax(nn.Module):
     
     where :math:`\gamma` is the lengthscale parameter, :math:`\beta` is the bias parameter.
 
-    Args:
-        lengthscale (float, optional):
-            Set this if you want a customized lengthscale. Default: `1.0`.
-        bias (float, optional):
-            Set this if you want a customized bias. Default: `None`.
+    :param lengthscale: Set this if you want a customized lengthscale. (Default: `1.0`.)
+    :type lengthscale: float, optional
+    :param bias: Set this if you want a customized bias. (Default: `None`.)
+    :type bias: float, optional
     """
 
     def __init__(self, lengthscale=1., bias=0., eps=1e-05):

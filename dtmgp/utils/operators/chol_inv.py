@@ -15,18 +15,13 @@ def mk_chol_inv(dyadic_design,
                 markov_kernel = LaplaceProductKernel(), 
                 upper: Optional[bool] = True):
     """
-    ------------------------
-    Parameters:
-    ------------------------
-    dyadic_design: object with dyadic points, dyadic_design.points is [n] size tensor
-    markov_kernel: Default = LaplaceProductKernel()
-    upper:  flag that indicates whether to return the inverse of a upper or lower triangular matrix
-            Default = True
+    :param dyadic_design: object with dyadic points, dyadic_design.points is [n] size tensor
+    :param markov_kernel: (Default: LaplaceProductKernel().)
+    :param upper: flag that indicates whether to return the inverse of a upper or lower triangular matrix (Default = `True`.)
+    :type upper: bool, optional
 
-    ------------------------
-    Returns:
-    ------------------------
-    Rinv: inverse of Cholesky decomposition of markov_kernel(dyadic_points,dyadic_points)
+    :return: Rinv: inverse of Cholesky decomposition of markov_kernel(dyadic_points,dyadic_points)
+    :rtype: torch.Tensor
     """
     dyadic_points = dyadic_design.points
     xlefts = dyadic_design.lefts
@@ -105,19 +100,13 @@ def tmk_chol_inv(sparse_grid_design,
                  tensor_markov_kernel=LaplaceProductKernel(),
                  upper: Optional[bool] = True) -> Tensor:
     """
-    ------------------------
-    Parameters:
-    ------------------------
-    sparse_grid_design: an object with sparse grid design
-    tensor_markov_kernel: Default = LaplaceProductKernel()
-
-    upper:  flag that indicates whether to return the inverse of a upper or lower triangular matrix
+    :param sparse_grid_design: an object with sparse grid design
+    :param tensor_markov_kernel: Default = LaplaceProductKernel()
+    :param upper:  flag that indicates whether to return the inverse of a upper or lower triangular matrix
             Default = True
 
-    ------------------------
-    Returns:
-    ------------------------
-    Rinv: inverse of Cholesky decomposition of tensor_markov_kernel(sg_points,sg_points)
+    :return: Rinv: inverse of Cholesky decomposition of tensor_markov_kernel(sg_points,sg_points)
+    :rtype: torch.Tensor
     """
 
     d = sparse_grid_design.d # dimension

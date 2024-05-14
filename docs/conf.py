@@ -32,11 +32,16 @@ language = 'en'
 extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.autodoc',
+    "sphinx.ext.coverage",
+    'sphinx.ext.napoleon',
     'sphinx.ext.autosummary',
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
     'sphinx_rtd_theme',
     "sphinx.ext.githubpages",
+    "sphinx_autodoc_typehints",
+    "nbsphinx",
+    "m2r2",
 ]
 
 # Add any paths that contain templates here, relative to this directory.

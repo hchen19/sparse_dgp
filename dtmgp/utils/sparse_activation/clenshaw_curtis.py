@@ -3,16 +3,11 @@ import torch
 
 def cc_design(deg, input_bd=[-1,1], dyadic_sort=True):
     """
-    ------------------------
-    Parameters:
-    deg: degree of clenshaw curtis (# of points = 2^(deg) - 1)
-    input_bd: [x_leftbd, x_rightbd], [2] size list
-    dyadic_sort: if sort=True, return sorted incremental tensor, default=True
+    :param deg: degree of clenshaw curtis (# of points = 2^(deg) - 1)
+    :param input_bd: [x_leftbd, x_rightbd], [2] size list
+    :param dyadic_sort: if sort=True, return sorted incremental tensor, default=True
 
-    ------------------------
-    Returns:
-    n = 2^deg
-    res: [-cos( 0*pi/ n ), -cos( 1*pi/ n ), ..., -cos( n*pi/ n ) ]
+    "return: res: [-cos( 0*pi/ n ), -cos( 1*pi/ n ), ..., -cos( n*pi/ n ) ], where n = 2^deg
          
     """
     x_1 = input_bd[0]

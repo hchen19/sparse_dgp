@@ -23,17 +23,16 @@ class TMGP(nn.Module):
             k\left( \mathbf{x}, X^{SG} \right)R^{-1}
         \end{equation*}
 
-    Args:
-        in_features (int): 
-            Size of each input sample.
-        n_level (int, optional): 
-            Level of sparse grid design. Default: `2`.
-        input_bd: 
-            Input bd. Default: `None`.
-        design_class (class, optional): 
-            Base design class of sparse grid. Default: `HyperbolicCrossDesign`.
-        kernel (class, optional): 
-            Kernel function of deep GP. Default: `LaplaceProductKernel(lengthscale=1.)`.
+    :param in_features: Size of each input sample.
+    :type in_features: int
+    :param n_level: Level of sparse grid design. (Default: `2`.)
+    :type n_level: int, optional
+    :param input_bd: Input boundary. (Default: `None`=[0,1].)
+    :type input_bd: 2-size list
+    :param design_class: Base design class of sparse grid. (Default: `HyperbolicCrossDesign`.)
+    :type design_class: class, optional
+    :param kernel: Kernel function of deep GP. (Default: `LaplaceProductKernel(lengthscale=1.)`.)
+    :type kernel: class, optional
     """
 
     def __init__(self,
@@ -90,17 +89,16 @@ class AMGP(nn.Module):
             \left\{ k\left( x_i, X^{SG} \right)R^{-1} \right\}^{d}_{i=1}
         \end{equation*}
 
-    Args:
-        in_features (int): 
-            Size of each input sample.
-        n_level (int, optional): 
-            Level of sparse grid design. Default: `2`.
-        input_bd: 
-            Input bd. Default: `None`.
-        design_class (class, optional): 
-            Base design class of sparse grid. Default: `HyperbolicCrossDesign`.
-        kernel (class, optional): 
-            Kernel function of deep GP. Default: `LaplaceProductKernel(lengthscale=1.)`.
+    :param in_features: Size of each input sample.
+    :type in_features: int
+    :param n_level: Level of sparse grid design. (Default: `2`.)
+    :type n_level: int, optional
+    :param input_bd: Input boundary. (Default: `None`=[0,1].)
+    :type input_bd: 2-size list
+    :param design_class: Base design class of sparse grid. (Default: `HyperbolicCrossDesign`.)
+    :type design_class: class, optional
+    :param kernel: Kernel function of deep GP. (Default: `LaplaceProductKernel(lengthscale=1.)`.)
+    :type kernel: class, optional
     """
 
     def __init__(self,

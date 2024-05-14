@@ -436,7 +436,7 @@ class AdditiveKernel(Kernel):
 
 
 class ProductKernel(Kernel):
-    """
+    r"""
     A Kernel that supports elementwise multiplying multiple component kernels together.
 
     Example:
