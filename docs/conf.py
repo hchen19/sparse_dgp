@@ -7,7 +7,7 @@ import sphinx_rtd_theme
 
 # Prefer to use the version of the theme in this repo
 # and not the installed version of the theme.
-# sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('..'))  # Source code dir relative to this file
 # sys.path.append(os.path.abspath('./demo/'))
 
 from sphinx_rtd_theme import __version__ as theme_version
