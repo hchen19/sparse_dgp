@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools >= 61.0", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["dtmgp"]
+
+[project]
+name = "sparse-dgp"
+version = "0.0.1"
+authors = [
+  { name="Wenyuan Zhao, Haoyuan Chen", email="chenhaoyuan2018@gmail.com" },
+]
+description = "Sparse Deep Gaussian Processes"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/hchen19/sparse_dgp"
+Issues = "https://github.com/hchen19/sparse_dgp/issues"
