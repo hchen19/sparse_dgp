@@ -5,7 +5,7 @@
    package page. DO NOT REMOVE THIS FILE!
 
 ************
-API
+API Documentation
 ************
 
 .. autosummary::
