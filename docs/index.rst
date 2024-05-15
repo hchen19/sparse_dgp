@@ -28,14 +28,10 @@ SparseDeepGP's documentation
 
 .. toctree::
    :glob:
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: API
 
-   layers.rst
-   kernels.rst
-   models.rst
-   utils.rst
-
+   api.rst
 
 References
 ======================
