@@ -19,9 +19,9 @@ from torch.optim.lr_scheduler import StepLR
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader, Subset, SubsetRandomSampler
 
-from dtmgp.models import DAMGPmnist, DTMGPmnist
-from dtmgp.utils.sparse_activation.design_class import HyperbolicCrossDesign
-from dtmgp.kernels.laplace_kernel import LaplaceProductKernel
+from sdgp.models import DAMGPmnist, DTMGPmnist
+from sdgp.utils.sparse_activation.design_class import HyperbolicCrossDesign
+from sdgp.kernels.laplace_kernel import LaplaceProductKernel
 
 len_trainset = 60000
 len_testset = 10000

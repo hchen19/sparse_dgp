@@ -3,8 +3,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from dtmgp.layers.conv import Conv2dReparameterization
-from dtmgp.layers.linear import LinearReparameterization
+from sdgp.layers.conv import Conv2dReparameterization
+from sdgp.layers.linear import LinearReparameterization
 
 prior_mu = 0.0
 prior_sigma = 1.0

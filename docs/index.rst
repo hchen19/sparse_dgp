@@ -22,7 +22,7 @@ SparseDeepGP's documentation
 .. toctree::
    :glob:
    :maxdepth: 1
-   :caption: Usage
+   :caption: Tutorials
 
    usage.rst
 

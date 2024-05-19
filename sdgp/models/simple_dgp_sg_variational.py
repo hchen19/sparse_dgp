@@ -2,8 +2,8 @@ from __future__ import print_function
 import torch
 import torch.nn as nn
 
-from dtmgp.layers.linear import LinearReparameterization
-from dtmgp.layers.tmgp import TMGP
+from sdgp.layers.linear import LinearReparameterization
+from sdgp.layers.tmgp import TMGP
 
 prior_mu = 0.0
 prior_sigma = 1.0
