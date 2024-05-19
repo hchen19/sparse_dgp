@@ -13,4 +13,4 @@ API Documentation
    :template: custom-module-template.rst
    :recursive:
 
-    dtmgp
+   sdgp
