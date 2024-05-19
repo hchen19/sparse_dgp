@@ -31,7 +31,7 @@ Defining an example model
 In the next cell, we define a simple 2-layer sparse DGP for a regression task. We'll be using this model to demonstrate
 the usage of the library.
 
-.. code-block:: console
+.. code-block:: python
 
     import torch
     import sparse-dgp as gp
