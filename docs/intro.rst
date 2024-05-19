@@ -18,9 +18,7 @@ the DGP, and the output of the :math:`i`-th layer is the input of the :math:`(i+
 
 We approximate GP :math:`\mathcal{G}^{(i)}` by the finite-rank approximation as a one-layer neural network:
 
-.. math:: \begin{align*} \hat{\mathcal{G}}^{(i)}(\cdot) := & \mu + k(\cdot, \mathbf{U}) [ k(\mathbf{U}, \mathbf{U})]^{-1}
-\mathcal{G}}^{(i)}(\mathbf{U}), \\ = & \mu + k(\cdot, \mathbf{U}) R^{-1}_{\mathbf{U}} \mathbf{Z} \\ = & \mu + \phi^{T}(\cdot)
-\mathbf{Z} \end{align*}
+.. math:: \begin{align*} \hat{\mathcal{G}}^{(i)}(\cdot) := & \mu + k(\cdot, \mathbf{U}) [ k(\mathbf{U}, \mathbf{U})]^{-1} \mathcal{G}^{(i)}(\mathbf{U}), \\ = & \mu + k(\cdot, \mathbf{U}) R^{-1}_{\mathbf{U}} \mathbf{Z} \\ = & \mu + \phi^{T}(\cdot) \mathbf{Z} \end{align*}
 
 where :math:`\mathbf{U}=\{ \mathbf{u}_i \}_{i=1}^{m}` are the inducing points. :math:`R_{\mathbf{U}}` is the Cholesky
 decomposition of the kernel matrix :math:`k(\mathbf{U}, \mathbf{U})`,
