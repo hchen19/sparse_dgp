@@ -19,7 +19,7 @@ from torch.utils.data import DataLoader, Subset, SubsetRandomSampler
 
 import numpy as np
 import matplotlib.pyplot as plt
-import sdgp.models.simple_cnn_variational as simple_cnn
+import sparse_dgp.models.simple_cnn_variational as simple_cnn
 
 len_trainset = 60000
 len_testset = 10000

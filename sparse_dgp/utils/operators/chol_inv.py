@@ -6,8 +6,8 @@ import scipy.sparse as sp
 import torch
 from torch import Tensor
 
-from sdgp.kernels.laplace_kernel import LaplaceProductKernel
-from sdgp.utils.operators.torch_scipy_sptransfer import torch_coo_to_scipy_coo
+from sparse_dgp.kernels.laplace_kernel import LaplaceProductKernel
+from sparse_dgp.utils.operators.torch_scipy_sptransfer import torch_coo_to_scipy_coo
 
 
 # one-dimension

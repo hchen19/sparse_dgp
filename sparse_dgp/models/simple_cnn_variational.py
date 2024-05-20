@@ -3,7 +3,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from sdgp.layers.linear import LinearReparameterization
+from sparse_dgp.layers.conv import Conv2dReparameterization
+from sparse_dgp.layers.linear import LinearReparameterization
 
 prior_mu = 0.0
 prior_sigma = 1.0
@@ -11,15 +12,35 @@ posterior_mu_init = 0.0
 posterior_rho_init = -3.0
 
 
-class SFC(nn.Module):
-    def __init__(self, input_dim=14, output_dim=1, activation=F.relu):
-        super(SFC, self).__init__()
+class SCNN(nn.Module):
+    def __init__(self):
+        super(SCNN, self).__init__()
+        self.conv1 = Conv2dReparameterization(
+            in_channels=1,
+            out_channels=8,
+            kernel_size=3,
+            stride=1,
+            prior_mean=prior_mu,
+            prior_variance=prior_sigma,
+            posterior_mu_init=posterior_mu_init,
+            posterior_rho_init=posterior_rho_init,
+        )
 
-        self.activation = activation
-
+        self.conv2 = Conv2dReparameterization(
+            in_channels=8,
+            out_channels=16,
+            kernel_size=3,
+            stride=1,
+            prior_mean=prior_mu,
+            prior_variance=prior_sigma,
+            posterior_mu_init=posterior_mu_init,
+            posterior_rho_init=posterior_rho_init,
+        )
+        self.dropout1 = nn.Dropout2d(0.25)
+        self.dropout2 = nn.Dropout2d(0.5)
         self.fc1 = LinearReparameterization(
-            in_features=input_dim,
-            out_features=128,
+            in_features=2304,
+            out_features=1000,
             prior_mean=prior_mu,
             prior_variance=prior_sigma,
             posterior_mu_init=posterior_mu_init,
@@ -27,26 +48,8 @@ class SFC(nn.Module):
         )
 
         self.fc2 = LinearReparameterization(
-            in_features=128,
-            out_features=256,
-            prior_mean=prior_mu,
-            prior_variance=prior_sigma,
-            posterior_mu_init=posterior_mu_init,
-            posterior_rho_init=posterior_rho_init,
-        )
-
-        self.fc3 = LinearReparameterization(
-            in_features=256,
-            out_features=128,
-            prior_mean=prior_mu,
-            prior_variance=prior_sigma,
-            posterior_mu_init=posterior_mu_init,
-            posterior_rho_init=posterior_rho_init,
-        )
-
-        self.fc4 = LinearReparameterization(
-            in_features=128,
-            out_features=output_dim,
+            in_features=1000,
+            out_features=10,
             prior_mean=prior_mu,
             prior_variance=prior_sigma,
             posterior_mu_init=posterior_mu_init,
@@ -55,19 +58,20 @@ class SFC(nn.Module):
 
     def forward(self, x):
         kl_sum = 0
+        x, kl = self.conv1(x)
+        kl_sum += kl
+        x = F.relu(x)
+        x, kl = self.conv2(x)
+        kl_sum += kl
+        x = F.relu(x)
+        x = F.max_pool2d(x, 2)
+        x = self.dropout1(x)
+        x = torch.flatten(x, 1)
         x, kl = self.fc1(x)
         kl_sum += kl
         x = F.relu(x)
+        x = self.dropout2(x)
         x, kl = self.fc2(x)
         kl_sum += kl
-        x = F.relu(x)
-        x, kl = self.fc3(x)
-        kl_sum += kl
-        x = F.relu(x)
-        x, kl = self.fc4(x)
-        kl_sum += kl
-        if self.activation is None:
-            output = x
-        else:
-            output = self.activation(x)  # attention, this only regress non-negative values TODO XXX
-        return torch.squeeze(output), kl_sum
+        output = F.log_softmax(x, dim=1)
+        return output, kl_sum

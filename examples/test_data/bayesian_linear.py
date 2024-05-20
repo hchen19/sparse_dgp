@@ -11,7 +11,7 @@ from torch.utils.tensorboard import SummaryWriter
 import numpy as np
 import matplotlib.pyplot as plt
 
-import sdgp.models.simple_fc_variational as simple_bnn
+import sparse_dgp.models.simple_fc_variational as simple_bnn
 from dataset.dataset import Dataset
 
 class BNN:

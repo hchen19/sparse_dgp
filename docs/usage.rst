@@ -34,4 +34,4 @@ the usage of the library.
 .. code-block:: python
 
     import torch
-    import sparse-dgp as gp
+    import sparse_dgp as gp

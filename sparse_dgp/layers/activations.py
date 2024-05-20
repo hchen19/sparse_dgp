@@ -2,10 +2,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from sdgp.kernels.laplace_kernel import LaplaceProductKernel
-from sdgp.layers.functional import MinMax
-from sdgp.utils.sparse_activation.design_class import HyperbolicCrossDesign, SparseGridDesign
-from sdgp.utils.operators.chol_inv import mk_chol_inv, tmk_chol_inv
+from sparse_dgp.kernels.laplace_kernel import LaplaceProductKernel
+from sparse_dgp.layers.functional import MinMax
+from sparse_dgp.utils.sparse_activation.design_class import HyperbolicCrossDesign, SparseGridDesign
+from sparse_dgp.utils.operators.chol_inv import mk_chol_inv, tmk_chol_inv
 
 __all__ = [
     'TMGP',

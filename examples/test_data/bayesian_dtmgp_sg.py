@@ -11,9 +11,9 @@ from torch.utils.tensorboard import SummaryWriter
 import numpy as np
 import matplotlib.pyplot as plt
 
-import sdgp.models.simple_dgp_sg_variational as simple_dtmgp
-from sdgp.utils.sparse_activation.design_class import HyperbolicCrossDesign
-from sdgp.kernels.laplace_kernel import LaplaceProductKernel
+import sparse_dgp.models.simple_dgp_sg_variational as simple_dtmgp
+from sparse_dgp.utils.sparse_activation.design_class import HyperbolicCrossDesign
+from sparse_dgp.kernels.laplace_kernel import LaplaceProductKernel
 from dataset.dataset import Dataset
 
 
