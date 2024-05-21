@@ -7,6 +7,31 @@ SparseDeepGP's documentation
 
 .. _GitHub Repo: https://github.com/hchen19/sparse_dgp
 
+
+.. _installation:
+
+Installation
+------------
+
+To use SparseDeepGP, first install it using pip:
+
+Install from `GitHub <https://github.com/hchen19/sparse_dgp>`_
+~~~~~~~~~~~~~~~~~
+
+.. code-block:: console
+
+   $ git clone https://github.com/hchen19/sparse_dgp.git
+   $ cd sparse_dgp
+   $ pip install -e .
+   # pip install -r requirements.txt # install requirements
+
+Install from `Package <https://test.pypi.org/project/sparse-dgp/>`_
+~~~~~~~~~~~~~~~~~
+
+.. code-block:: console
+
+   (.venv) $ pip install sparse-dgp
+
 .. note::
 
    This project is under active development.
@@ -21,17 +46,10 @@ SparseDeepGP's documentation
 
 .. toctree::
    :glob:
-   :maxdepth: 1
-   :caption: Usage
-
-   usage.rst
-
-.. toctree::
-   :glob:
    :maxdepth: 2
    :caption: Examples:
 
-   examples/**/index
+   examples/**/index.rst
 
 .. toctree::
    :glob:
