@@ -49,7 +49,7 @@ Install from `Package <https://test.pypi.org/project/sparse-dgp/>`_
    :maxdepth: 2
    :caption: Examples:
 
-   examples/**/index.rst
+   examples/**/index
 
 .. toctree::
    :glob:
