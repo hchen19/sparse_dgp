@@ -25,13 +25,13 @@ Install from `Package <https://test.pypi.org/project/sparse-dgp/>`_
 
    (.venv) $ pip install sparse-dgp
 
-Defining an example model
-------------
+.. Defining an example model
+.. ------------
 
-In the next cell, we define a simple 2-layer sparse DGP for a regression task. We'll be using this model to demonstrate
-the usage of the library.
+.. In the next cell, we define a simple 2-layer sparse DGP for a regression task. We'll be using this model to demonstrate
+.. the usage of the library.
 
-.. code-block:: python
+.. .. code-block:: python
 
-    import torch
-    import sparse_dgp as gp
+..     import torch
+..     import sparse_dgp as gp

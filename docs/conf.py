@@ -40,6 +40,7 @@ extensions = [
     'sphinx_rtd_theme',
     "sphinx.ext.githubpages",
     "sphinx_autodoc_typehints",
+    "nbsphinx",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -54,7 +55,7 @@ source_suffix = ['.rst', '.md'] #'.rst'
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", '**.ipynb_checkpoints']
 
 locale_dirs = ['locale/']
 gettext_compact = False
