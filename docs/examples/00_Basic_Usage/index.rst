@@ -1,7 +1,8 @@
 Basic Usage
 ==============
 
-This folder contains notebooks for basic usage of the package.
+This folder contains notebooks for basic usage of the package, e.g. things like training
+and evaluating models, and saving and loading models.
 
 .. toctree::
    :maxdepth: 1

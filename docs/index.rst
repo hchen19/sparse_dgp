@@ -3,7 +3,9 @@
 SparseDeepGP's documentation
 ====================================
 
-**SparseDeepGP** is a Python library for sparse deep Gaussian processes. This documentation is for the `GitHub Repo`_.
+**SparseDeepGP** is a Python library for sparse deep Gaussian processes with GPU acceleration. It is built on top of
+`PyTorch <https://pytorch.org/>`_ and provides a simple and flexible API for building complex deep GP models.
+This documentation is for the `GitHub Repo`_.
 
 .. _GitHub Repo: https://github.com/hchen19/sparse_dgp
 
@@ -13,7 +15,7 @@ SparseDeepGP's documentation
 Installation
 ------------
 
-To use SparseDeepGP, first install it using pip:
+To use SparseDeepGP, make sure you have `PyTorch installed <https://pytorch.org/get-started/locally/>`_, then install it using pip:
 
 Install from `GitHub <https://github.com/hchen19/sparse_dgp>`_
 ~~~~~~~~~~~~~~~~~
@@ -40,9 +42,10 @@ Install from `Package <https://test.pypi.org/project/sparse-dgp/>`_
 .. toctree::
    :glob:
    :maxdepth: 2
-   :caption: Introduction
+   :caption: Tutorials:
 
    intro.rst
+   install.rst
 
 .. toctree::
    :glob:
