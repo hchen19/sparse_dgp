@@ -5,6 +5,7 @@ from .simple_dgp_add_variational import SDTMGPadd
 from .simple_dgp_sg_variational import SDTMGPsg
 from .simple_fc_variational import SFC
 from .cifar_resnet_variational import *
+from .cifar_dgp_variational import *
 from .imgnet_resnet_variational import *
 
 __all__ = [
