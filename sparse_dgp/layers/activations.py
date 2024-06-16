@@ -133,7 +133,8 @@ class AMGP(nn.Module):
         :return: [n,m*d] size tensor, kernel(input, sparse_grid) @ chol_inv
         """
 
-        x = self.minmax(x)
+        # x = self.minmax(x)
+        x = F.normalize(x)
         x = torch.flatten(x, start_dim=1)  # flatten x of size [...,n,d] --> size [...,n*d]
         x = x.unsqueeze(dim=-1)  # add new dimension, x of size [...,n*d] --> size [...,n*d, 1]
         x = self.kernel(x, self.design_points)  # [...,n*d, m] size tenosr

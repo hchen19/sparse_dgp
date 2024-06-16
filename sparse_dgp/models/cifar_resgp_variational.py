@@ -12,9 +12,11 @@ import torch.nn.functional as F
 import torch.nn.init as init
 from sparse_dgp.layers import LinearReparameterization
 from sparse_dgp.layers import AMGP
+from sparse_dgp.utils.sparse_activation.design_class import HyperbolicCrossDesign
+from sparse_dgp.kernels.laplace_kernel import LaplaceProductKernel
 
 __all__ = [
-    'ResNet', 'resnet8', 'resnet20', 'resnet32', 'resnet44', 'resnet56', 'resnet110'
+    'ResNet', 'resgp8', 'resgp20', 'resgp32', 'resgp44', 'resgp56'
 ]
 
 
@@ -100,15 +102,15 @@ class BasicBlock(nn.Module):
 
     def forward(self, x):
         kl_sum = 0
-        x = self.gp1(x)
-        x, kl = self.fc1(x)
+        out = self.gp1(x)
+        out, kl = self.fc1(out)
         kl_sum += kl
-        x = self.gp2(x)
-        x, kl = self.fc2(x)
+        out = self.gp2(out)
+        out, kl = self.fc2(out)
         kl_sum += kl
-        x += self.shortcut(x)
+        out += self.shortcut(x)
 
-        return x, kl_sum
+        return out, kl_sum
 
 
 class ResNet(nn.Module):
@@ -126,7 +128,7 @@ class ResNet(nn.Module):
             bias=True,
         )
         self.layer1 = self._make_layer(design_class, kernel, block, 64, num_blocks[0])
-        self.layer2 = self._make_layer(design_class, kernel, block, 128, num_blocks[1])
+        self.layer2 = self._make_layer(design_class, kernel, block, 64, num_blocks[1])
         self.layer3 = self._make_layer(design_class, kernel, block, 32, num_blocks[2])
         self.gp1 = AMGP(in_features = 32, n_level = 5, design_class = design_class, kernel = kernel)
         self.fc1 = LinearReparameterization(
@@ -148,38 +150,36 @@ class ResNet(nn.Module):
 
     def forward(self, x):
         kl_sum = 0
-        x = self.fc0(x)
+        out = torch.flatten(x, 1)
+        out = self.fc0(out)
         for layer in self.layer1:
-            x, kl = layer(x)
+            out, kl = layer(out)
             kl_sum += kl
         for layer in self.layer2:
-            x, kl = layer(x)
+            out, kl = layer(out)
             kl_sum += kl
         for layer in self.layer3:
-            x, kl = layer(x)
+            out, kl = layer(out)
             kl_sum += kl
-        x = self.gp1(x)
-        x, kl = self.fc1(x)
+        out = self.gp1(out)
+        out, kl = self.fc1(out)
         kl_sum += kl
-        return x, kl_sum
+        return out, kl_sum
 
 
-def resnet8(input_dim, design_class, kernel, num_classes):
+def resgp8(input_dim=3072, design_class=HyperbolicCrossDesign, kernel=LaplaceProductKernel(1.), num_classes=10):
     return ResNet(input_dim, design_class, kernel, BasicBlock, [1, 1, 1], num_classes)
 
-def resnet20(input_dim, design_class, kernel, num_classes):
+def resgp20(input_dim=3072, design_class=HyperbolicCrossDesign, kernel=LaplaceProductKernel(1.), num_classes=10):
     return ResNet(input_dim, design_class, kernel, BasicBlock, [3, 3, 3], num_classes)
 
-def resnet32(input_dim, design_class, kernel, num_classes):
+def resgp32(input_dim=3072, design_class=HyperbolicCrossDesign, kernel=LaplaceProductKernel(1.), num_classes=10):
     return ResNet(input_dim, design_class, kernel, BasicBlock, [5, 5, 5], num_classes)
 
-def resnet44(input_dim, design_class, kernel, num_classes):
+def resgp44(input_dim=3072, design_class=HyperbolicCrossDesign, kernel=LaplaceProductKernel(1.), num_classes=10):
     return ResNet(input_dim, design_class, kernel, BasicBlock, [7, 7, 7], num_classes)
 
-def resnet56(input_dim, design_class, kernel, num_classes):
+def resgp56(input_dim=3072, design_class=HyperbolicCrossDesign, kernel=LaplaceProductKernel(1.), num_classes=10):
     return ResNet(input_dim, design_class, kernel, BasicBlock, [9, 9, 9], num_classes)
-
-def resnet110(input_dim, design_class, kernel, num_classes):
-    return ResNet(input_dim, design_class, kernel, BasicBlock, [18, 18, 18], num_classes)
 
 
