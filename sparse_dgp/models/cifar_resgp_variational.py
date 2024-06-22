@@ -19,7 +19,6 @@ __all__ = [
     'ResNet', 'resgp8', 'resgp20', 'resgp32', 'resgp44', 'resgp56'
 ]
 
-
 prior_mu = 0.0
 prior_sigma = 1.0
 posterior_mu_init = 0.0
@@ -44,37 +43,37 @@ class LambdaLayer(nn.Module):
 class BasicBlock(nn.Module):
     expansion = 1
 
-    def __init__(self, in_features, features, design_class, kernel, n_level=5, option='A'):
+    def __init__(self, in_features, features, design_class, kernel, n_level=5, option='B'):
         super(BasicBlock, self).__init__()
         self.gp1 = AMGP(
-            in_features = in_features,
-            n_level = n_level,
-            design_class = design_class,
-            kernel = kernel
+            in_features=in_features,
+            n_level=n_level,
+            design_class=design_class,
+            kernel=kernel
         )
         self.fc1 = LinearReparameterization(
-            in_features = self.gp1.out_features,
-            out_features = features,
-            prior_mean = prior_mu,
-            prior_variance = prior_sigma,
-            posterior_mu_init = posterior_mu_init,
-            posterior_rho_init = posterior_rho_init,
-            bias = False
+            in_features=self.gp1.out_features,
+            out_features=features,
+            prior_mean=prior_mu,
+            prior_variance=prior_sigma,
+            posterior_mu_init=posterior_mu_init,
+            posterior_rho_init=posterior_rho_init,
+            bias=False
         )
         self.gp2 = AMGP(
-            in_features = features,
-            n_level = n_level,
-            design_class = design_class,
-            kernel = kernel
+            in_features=features,
+            n_level=n_level,
+            design_class=design_class,
+            kernel=kernel
         )
         self.fc2 = LinearReparameterization(
-            in_features = self.gp2.out_features,
-            out_features = features,
-            prior_mean = prior_mu,
-            prior_variance = prior_sigma,
-            posterior_mu_init = posterior_mu_init,
-            posterior_rho_init = posterior_rho_init,
-            bias = False
+            in_features=self.gp2.out_features,
+            out_features=features,
+            prior_mean=prior_mu,
+            prior_variance=prior_sigma,
+            posterior_mu_init=posterior_mu_init,
+            posterior_rho_init=posterior_rho_init,
+            bias=False
         )
 
         self.shortcut = nn.Sequential()
@@ -90,13 +89,14 @@ class BasicBlock(nn.Module):
             elif option == 'B':
                 self.shortcut = nn.Sequential(
                     LinearReparameterization(
-                        in_features = in_features,
-                        out_features = features,
-                        prior_mean = prior_mu,
-                        prior_variance = prior_sigma,
-                        posterior_mu_init = posterior_mu_init,
-                        posterior_rho_init = posterior_rho_init,
-                        bias = False
+                        in_features=in_features,
+                        out_features=features,
+                        prior_mean=prior_mu,
+                        prior_variance=prior_sigma,
+                        posterior_mu_init=posterior_mu_init,
+                        posterior_rho_init=posterior_rho_init,
+                        bias=False,
+                        return_kl=False
                     ), nn.LayerNorm(features)
                 )
 
@@ -130,15 +130,15 @@ class ResNet(nn.Module):
         self.layer1 = self._make_layer(design_class, kernel, block, 64, num_blocks[0])
         self.layer2 = self._make_layer(design_class, kernel, block, 64, num_blocks[1])
         self.layer3 = self._make_layer(design_class, kernel, block, 32, num_blocks[2])
-        self.gp1 = AMGP(in_features = 32, n_level = 5, design_class = design_class, kernel = kernel)
+        self.gp1 = AMGP(in_features=32, n_level=5, design_class=design_class, kernel=kernel)
         self.fc1 = LinearReparameterization(
-            in_features = self.gp1.out_features,
-            out_features = num_classes,
-            prior_mean = prior_mu,
-            prior_variance = prior_sigma,
-            posterior_mu_init = posterior_mu_init,
-            posterior_rho_init = posterior_rho_init,
-            bias = True
+            in_features=self.gp1.out_features,
+            out_features=num_classes,
+            prior_mean=prior_mu,
+            prior_variance=prior_sigma,
+            posterior_mu_init=posterior_mu_init,
+            posterior_rho_init=posterior_rho_init,
+            bias=True
         )
 
     def _make_layer(self, design_class, kernel, block, features, num_blocks):
@@ -151,7 +151,8 @@ class ResNet(nn.Module):
     def forward(self, x):
         kl_sum = 0
         out = torch.flatten(x, 1)
-        out = self.fc0(out)
+        out, kl = self.fc0(out)
+        kl_sum += kl
         for layer in self.layer1:
             out, kl = layer(out)
             kl_sum += kl
@@ -170,16 +171,18 @@ class ResNet(nn.Module):
 def resgp8(input_dim=3072, design_class=HyperbolicCrossDesign, kernel=LaplaceProductKernel(1.), num_classes=10):
     return ResNet(input_dim, design_class, kernel, BasicBlock, [1, 1, 1], num_classes)
 
+
 def resgp20(input_dim=3072, design_class=HyperbolicCrossDesign, kernel=LaplaceProductKernel(1.), num_classes=10):
     return ResNet(input_dim, design_class, kernel, BasicBlock, [3, 3, 3], num_classes)
+
 
 def resgp32(input_dim=3072, design_class=HyperbolicCrossDesign, kernel=LaplaceProductKernel(1.), num_classes=10):
     return ResNet(input_dim, design_class, kernel, BasicBlock, [5, 5, 5], num_classes)
 
+
 def resgp44(input_dim=3072, design_class=HyperbolicCrossDesign, kernel=LaplaceProductKernel(1.), num_classes=10):
     return ResNet(input_dim, design_class, kernel, BasicBlock, [7, 7, 7], num_classes)
 
+
 def resgp56(input_dim=3072, design_class=HyperbolicCrossDesign, kernel=LaplaceProductKernel(1.), num_classes=10):
     return ResNet(input_dim, design_class, kernel, BasicBlock, [9, 9, 9], num_classes)
-
-

@@ -6,238 +6,274 @@ from pathlib import Path  # if you haven't already done so
 file = Path(os.path.dirname(os.path.abspath(__file__))).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
-
-import argparse
-import os
-import shutil
 import time
+import argparse
+import numpy as np
+import matplotlib.pyplot as plt
 
 import torch
-import torch.nn as nn
-import torch.nn.parallel
-import torch.backends.cudnn as cudnn
-import torch.optim
-import torch.utils.data
+import torch.nn.functional as F
+import torch.optim as optim
+from torchvision import datasets, transforms
+from torch.optim.lr_scheduler import StepLR
 from torch.utils.tensorboard import SummaryWriter
-import torchvision.transforms as transforms
-import torchvision.datasets as datasets
-import sparse_dgp.models.cifar_resnet_variational as resnet
+from torch.utils.data import DataLoader, Subset, SubsetRandomSampler
+
+from sparse_dgp.models import DAMGPcifar, DTMGPcifar
 import sparse_dgp.models.cifar_resgp_variational as resgp
-from sparse_dgp.utils.util import get_rho
-import numpy as np
+from sparse_dgp.utils.sparse_activation.design_class import HyperbolicCrossDesign
+from sparse_dgp.kernels.laplace_kernel import LaplaceProductKernel
 
-model_names = sorted(
-    name for name in resgp.__dict__
-    if name.islower() and not name.startswith("__")
-    and name.startswith("resgp") and callable(resgp.__dict__[name]))
-
-print(model_names)
 len_trainset = 50000
 len_testset = 10000
 
-parser = argparse.ArgumentParser(description='CIFAR10')
-parser.add_argument('--arch',
-                    '-a',
-                    metavar='ARCH',
-                    default='resgp20',
-                    choices=model_names,
-                    help='model architecture: ' + ' | '.join(model_names) +
-                    ' (default: resgp20)')
-parser.add_argument('-j',
-                    '--workers',
-                    default=8,
-                    type=int,
-                    metavar='N',
-                    help='number of data loading workers (default: 8)')
-parser.add_argument('--epochs',
-                    default=200,
-                    type=int,
-                    metavar='N',
-                    help='number of total epochs to run')
-parser.add_argument('--start-epoch',
-                    default=0,
-                    type=int,
-                    metavar='N',
-                    help='manual epoch number (useful on restarts)')
-parser.add_argument('-b',
-                    '--batch-size',
-                    default=128,
-                    type=int,
-                    metavar='N',
-                    help='mini-batch size (default: 128)')
-parser.add_argument('--lr',
-                    '--learning-rate',
-                    default=0.001,
-                    type=float,
-                    metavar='LR',
-                    help='initial learning rate')
-parser.add_argument('--momentum',
-                    default=0.9,
-                    type=float,
-                    metavar='M',
-                    help='momentum')
-parser.add_argument('--weight-decay',
-                    '--wd',
-                    default=5e-4,
-                    type=float,
-                    metavar='W',
-                    help='weight decay (default: 5e-4)')
-parser.add_argument('--print-freq',
-                    '-p',
-                    default=50,
-                    type=int,
-                    metavar='N',
-                    help='print frequency (default: 20)')
-parser.add_argument('--resume',
-                    default='',
-                    type=str,
-                    metavar='PATH',
-                    help='path to latest checkpoint (default: none)')
-parser.add_argument('-e',
-                    '--evaluate',
-                    dest='evaluate',
-                    action='store_true',
-                    help='evaluate model on validation set')
-parser.add_argument('--pretrained',
-                    dest='pretrained',
-                    action='store_true',
-                    help='use pre-trained model')
-parser.add_argument('--half',
-                    dest='half',
-                    action='store_true',
-                    help='use half-precision(16-bit) ')
-parser.add_argument('--save-dir',
-                    dest='save_dir',
-                    help='The directory used to save the trained models',
-                    default='./checkpoint/bayesian',
-                    type=str)
-parser.add_argument(
-    '--save-every',
-    dest='save_every',
-    help='Saves checkpoints at every specified number of epochs',
-    type=int,
-    default=10)
-parser.add_argument('--mode', type=str, required=True, help='train | test')
-parser.add_argument(
-    '--num_monte_carlo',
-    type=int,
-    default=20,
-    metavar='N',
-    help='number of Monte Carlo samples to be drawn during inference')
-parser.add_argument('--num_mc',
-                    type=int,
-                    default=1,
-                    metavar='N',
-                    help='number of Monte Carlo runs during training')
-parser.add_argument(
-    '--tensorboard',
-    type=bool,
-    default=True,
-    metavar='N',
-    help='use tensorboard for logging and visualization of training progress')
-parser.add_argument(
-    '--log_dir',
-    type=str,
-    default='./logs/cifar/bayesian',
-    metavar='N',
-    help='use tensorboard for logging and visualization of training progress')
 
-best_prec1 = 0
+def train(args, model, device, train_loader, optimizer, epoch, tb_writer=None):
+    model.train()
+    for batch_idx, (data, target) in enumerate(train_loader):
+        data, target = data.to(device), target.to(device)
+        optimizer.zero_grad()
+        output_ = []
+        kl_ = []
+        for mc_run in range(args.num_mc):
+            output, kl = model(data)
+            output_.append(output)
+            kl_.append(kl)
+        output = torch.mean(torch.stack(output_), dim=0)
+        kl = torch.mean(torch.stack(kl_), dim=0)
+        nll_loss = F.nll_loss(output, target)
+        # ELBO loss
+        loss = nll_loss + (kl / args.batch_size)
+
+        loss.backward()
+        optimizer.step()
+
+        if batch_idx % args.log_interval == 0:
+            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+                epoch, batch_idx * len(data), len(train_loader.dataset),
+                       100. * batch_idx / len(train_loader), loss.item()))
+
+        if tb_writer is not None:
+            tb_writer.add_scalar('train/loss', loss.item(), epoch)
+            tb_writer.flush()
 
 
-def MOPED_layer(layer, det_layer, delta):
+def test(args, model, device, test_loader, epoch, tb_writer=None):
+    model.eval()
+    test_loss = 0
+    correct = 0
+    with torch.no_grad():
+        for data, target in test_loader:
+            data, target = data.to(device), target.to(device)
+            output, kl = model(data)
+            test_loss += F.nll_loss(output, target, reduction='sum').item() + (
+                    kl / args.batch_size)  # sum up batch loss
+            pred = output.argmax(
+                dim=1,
+                keepdim=True)  # get the index of the max log-probability
+            correct += pred.eq(target.view_as(pred)).sum().item()
+
+    test_loss /= len(test_loader.dataset)
+
+    print(
+        '\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.2f}%)\n'.format(
+            test_loss, correct, len(test_loader.dataset),
+            100. * correct / len(test_loader.dataset)))
+
+    val_accuracy = correct / len(test_loader.dataset)
+    if tb_writer is not None:
+        tb_writer.add_scalar('val/loss', test_loss, epoch)
+        tb_writer.add_scalar('val/accuracy', val_accuracy, epoch)
+        tb_writer.flush()
+    return val_accuracy
+
+
+def evaluate(args, model, device, test_loader, barplot):
+    pred_probs_mc = []
+    test_loss = 0
+    correct = 0
+    with torch.no_grad():
+        pred_probs_mc = []
+        for data, target in test_loader:
+            data, target = data.to(device), target.to(device)
+            for mc_run in range(args.num_monte_carlo):
+                model.eval()
+                output, _ = model.forward(data)
+                # get probabilities from log-prob
+                pred_probs = torch.exp(output)
+                pred_probs_mc.append(pred_probs.cpu().data.numpy())
+
+        target_labels = target.cpu().data.numpy()
+        pred_mean = np.mean(pred_probs_mc, axis=0)
+        pred_std = np.std(pred_probs_mc, axis=0)
+        Y_pred = np.argmax(pred_mean, axis=1)
+        print('Test accuracy:', (Y_pred == target_labels).mean() * 100)
+        np.save('./probs_mnist_dtmgp_mc.npy', pred_probs_mc)
+        np.save('./mnist_test_labels_dtmgp_mc.npy', target_labels)
+
+        # plot some randomly selected examples
+        # To plot the errorbar, set "--num_monte_carlo 100" or the higher values in argument would be recommended
+        if barplot:
+            num_examples = 10
+            # randomly select [num_samples]-size indices from torch.arange(0,len_testset) without replacement
+            indices = torch.randperm(data.shape[0])[:num_examples]
+
+            # data is [len_testset, 1, 28, 28] size tensor
+            # target is [len_testset] size tensor
+            data_examples = data[indices, :, :, :].cpu()  # [num_examples, 1, 28, 28] size tensor
+            target_examples = target[indices].cpu()  # [num_examples] size tensor
+
+            pred_mean_examples = pred_mean[indices, :]  # [num_examples, 10] size tensor
+            pred_std_examples = pred_std[indices, :]  # [num_examples, 10] size tensor
+
+            for i in range(num_examples):
+                fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(12, 12))
+
+                # plot true digits
+                axes[0].imshow(data_examples[i, 0, :, :], cmap='gray', interpolation='nearest')
+
+                # plot bar chart with std over digits 0,...,9
+                axes[1].bar(np.arange(10), pred_mean_examples[i, :], color='lightblue')
+                axes[1].errorbar(np.arange(10), pred_mean_examples[i, :], yerr=pred_std_examples[i, :],
+                                 fmt='.', color='red', elinewidth=2, capthick=10, errorevery=1,
+                                 alpha=0.5, ms=4, capsize=2)
+                axes[1].set_xlabel('digits', fontsize=20)
+                axes[1].set_ylabel('digits prob', fontsize=20)
+                axes[1].tick_params(labelsize=20)
+
+                # major ticks every 1, minor ticks every 5
+                xmajor_ticks = np.arange(0, 10, 1)
+                ymajor_ticks = np.arange(0, 1.1, 0.1)
+
+                axes[1].set_xticks(xmajor_ticks)
+                axes[1].set_yticks(ymajor_ticks)
+                axes[1].grid(which='both', linestyle='--', linewidth=1.5)
+
+                plt.close(fig)
+                # save the full figure
+                fig.savefig(f'./figures/barplots/barplot_{i}.png')
+
+
+def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
     """
-    Set the priors and initialize surrogate posteriors of Bayesian NN with Empirical Bayes
-    MOPED (Model Priors with Empirical Bayes using Deterministic DNN)
-    Reference:
-    [1] Ranganath Krishnan, Mahesh Subedar, Omesh Tickoo.
-        Specifying Weight Priors in Bayesian Deep Neural Networks with Empirical Bayes. AAAI 2020.
+    Save the training model
     """
-
-    if (str(layer) == 'Conv2dReparameterization()'):
-        #set the priors
-        print(str(layer))
-        layer.prior_weight_mu = det_layer.weight.data
-        if layer.prior_bias_mu is not None:
-            layer.prior_bias_mu = det_layer.bias.data
-
-        #initialize surrogate posteriors
-        layer.mu_kernel.data = det_layer.weight.data
-        layer.rho_kernel.data = get_rho(det_layer.weight.data, delta)
-        if layer.mu_bias is not None:
-            layer.mu_bias.data = det_layer.bias.data
-            layer.rho_bias.data = get_rho(det_layer.bias.data, delta)
-
-    elif (isinstance(layer, nn.Conv2d)):
-        print(str(layer))
-        layer.weight.data = det_layer.weight.data
-        if layer.bias is not None:
-            layer.bias.data = det_layer.bias.data
-
-    elif (str(layer) == 'LinearReparameterization()'):
-        print(str(layer))
-        layer.prior_weight_mu = det_layer.weight.data
-        if layer.prior_bias_mu is not None:
-            layer.prior_bias_mu = det_layer.bias.data
-
-        #initialize the surrogate posteriors
-        layer.mu_weight.data = det_layer.weight.data
-        layer.rho_weight.data = get_rho(det_layer.weight.data, delta)
-        if layer.mu_bias is not None:
-            layer.mu_bias.data = det_layer.bias.data
-            layer.rho_bias.data = get_rho(det_layer.bias.data, delta)
-
-    elif str(layer).startswith('Batch'):
-        #initialize parameters
-        print(str(layer))
-        layer.weight.data = det_layer.weight.data
-        if layer.bias is not None:
-            layer.bias.data = det_layer.bias.data
-        layer.running_mean.data = det_layer.running_mean.data
-        layer.running_var.data = det_layer.running_var.data
-        layer.num_batches_tracked.data = det_layer.num_batches_tracked.data
-
+    torch.save(state, filename)
 
 def main():
-    global args, best_prec1
+    model_names = sorted(
+        name for name in resgp.__dict__
+        if name.islower() and not name.startswith("__")
+        and name.startswith("resnet") and callable(resgp.__dict__[name]))
+
+    print(model_names)
+
+    # Training settings
+    parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Example')
+    parser.add_argument('--arch',
+                        '-a',
+                        metavar='ARCH',
+                        default='resgp20',
+                        choices=model_names,
+                        help='model architecture: ' + ' | '.join(model_names) +
+                             ' (default: resgp20)')
+    parser.add_argument('--error-bar',
+                        type=bool,
+                        default=True,
+                        help='plot the error bar')
+    parser.add_argument('--subset-size',
+                        type=int,
+                        default=50000,
+                        metavar='N',
+                        help='the size of the training subset')
+    parser.add_argument('--batch-size',
+                        type=int,
+                        default=128,
+                        metavar='N',
+                        help='input batch size for training (default: 64)')
+    parser.add_argument('--test-batch-size',
+                        type=int,
+                        default=10000,
+                        metavar='N',
+                        help='input batch size for testing (default: 10000)')
+    parser.add_argument('--epochs',
+                        type=int,
+                        default=200,
+                        metavar='N',
+                        help='number of epochs to train (default: 14)')
+    parser.add_argument('--lr',
+                        type=float,
+                        default=0.001,
+                        metavar='LR',
+                        help='learning rate (default: 1.0)')
+    parser.add_argument('--gamma',
+                        type=float,
+                        default=0.7,
+                        metavar='M',
+                        help='Learning rate step gamma (default: 0.7)')
+    parser.add_argument('--no-cuda',
+                        action='store_true',
+                        default=False,
+                        help='disables CUDA training')
+    parser.add_argument('--seed',
+                        type=int,
+                        default=10,
+                        metavar='S',
+                        help='random seed (default: 1)')
+    parser.add_argument('--log-interval',
+                        type=int,
+                        default=100,
+                        metavar='N',
+                        help='how many batches to wait before logging training status')
+    parser.add_argument('--save_dir',
+                        type=str,
+                        default='./checkpoint/bayesian')
+    parser.add_argument('--mode',
+                        type=str,
+                        default='train',
+                        help='train | test')
+    parser.add_argument('--num_monte_carlo',
+                        type=int,
+                        default=20,
+                        metavar='N',
+                        help='number of Monte Carlo samples to be drawn for inference')
+    parser.add_argument('--num_mc',
+                        type=int,
+                        default=1,
+                        metavar='N',
+                        help='number of Monte Carlo runs during training')
+    parser.add_argument('--tensorboard',
+                        action="store_true",
+                        help='use tensorboard for logging and visualization of training progress')
+    parser.add_argument('--log_dir',
+                        type=str,
+                        default='./logs/cifar/bayesian',
+                        metavar='N',
+                        help='use tensorboard for logging and visualization of training progress')
+
     args = parser.parse_args()
+    use_cuda = not args.no_cuda and torch.cuda.is_available()
+    torch.manual_seed(args.seed)
 
-    # Check the save_dir exists or not
-    if not os.path.exists(args.save_dir):
-        os.makedirs(args.save_dir)
+    device = torch.device("cuda" if use_cuda else "cpu")
+    print("Using: ", device)
 
-    model = torch.nn.DataParallel(resgp.__dict__[args.arch]())
-    if torch.cuda.is_available():
-        model.cuda()
-    else:
-        model.cpu()
-
-    # optionally resume from a checkpoint
-    if args.resume:
-        if os.path.isfile(args.resume):
-            print("=> loading checkpoint '{}'".format(args.resume))
-            checkpoint = torch.load(args.resume)
-            args.start_epoch = checkpoint['epoch']
-            best_prec1 = checkpoint['best_prec1']
-            model.load_state_dict(checkpoint['state_dict'])
-            print("=> loaded checkpoint '{}' (epoch {})".format(
-                args.evaluate, checkpoint['epoch']))
-        else:
-            print("=> no checkpoint found at '{}'".format(args.resume))
-
-    cudnn.benchmark = True
+    kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
 
     tb_writer = None
     if args.tensorboard:
+
         logger_dir = os.path.join(args.log_dir, 'tb_logger')
+        print("yee")
         if not os.path.exists(logger_dir):
             os.makedirs(logger_dir)
+
         tb_writer = SummaryWriter(logger_dir)
 
+    # Prepare MNIST dataset
     normalize = transforms.Normalize(mean=[0.4914, 0.4822, 0.4465],
                                      std=[0.2023, 0.1994, 0.2010])
-
-    train_loader = torch.utils.data.DataLoader(datasets.CIFAR10(
+    cifar_dataset = datasets.CIFAR10(
         root='./data',
         train=True,
         transform=transforms.Compose([
@@ -246,47 +282,42 @@ def main():
             transforms.ToTensor(),
             normalize,
         ]),
-        download=True),
-        batch_size=args.batch_size,
-        shuffle=True,
-        num_workers=args.workers,
-        pin_memory=True)
+        download=True)
 
-    val_loader = torch.utils.data.DataLoader(datasets.CIFAR10(
-        root='./data',
-        train=False,
-        transform=transforms.Compose([
-            transforms.ToTensor(),
-            normalize,
-        ])),
-        batch_size=args.batch_size,
+    # Create a subset of the MNIST dataset
+    if args.subset_size < len_trainset:
+        subset_size = args.subset_size
+        subset_indices = torch.randperm(len(cifar_dataset))[:subset_size]
+        subset_cifar = Subset(cifar_dataset, subset_indices)
+
+        # Create the subset DataLoader
+        train_loader = DataLoader(subset_cifar, batch_size=args.batch_size, shuffle=True, **kwargs)
+
+    else:
+        train_loader = torch.utils.data.DataLoader(
+            cifar_dataset,
+            batch_size=args.batch_size,
+            shuffle=True,
+            **kwargs)
+
+    test_loader = torch.utils.data.DataLoader(
+        cifar_dataset,
+        batch_size=args.test_batch_size,
         shuffle=False,
-        num_workers=args.workers,
-        pin_memory=True)
+        **kwargs)
 
     if not os.path.exists(args.save_dir):
         os.makedirs(args.save_dir)
 
-    if torch.cuda.is_available():
-        criterion = nn.CrossEntropyLoss().cuda()
-    else:
-        criterion = nn.CrossEntropyLoss().cpu()
+    model = resgp.__dict__[args.arch]().to(device)
 
-    if args.half:
-        model.half()
-        criterion.half()
+    best_prec1 = 0
 
-    # if args.arch in ['resnet110']:
-    #     for param_group in optimizer.param_groups:
-    #         param_group['lr'] = args.lr * 0.1
-
-    if args.evaluate:
-        validate(val_loader, model, criterion)
-        return
-
+    start = time.time()
+    print(args.mode)
     if args.mode == 'train':
 
-        for epoch in range(args.start_epoch, args.epochs):
+        for epoch in range(1, args.epochs + 1):
 
             lr = args.lr
             if (epoch >= 80 and epoch < 120):
@@ -300,14 +331,9 @@ def main():
 
             optimizer = torch.optim.Adam(model.parameters(), lr)
 
-            # train for one epoch
-            print('current lr {:.5e}'.format(optimizer.param_groups[0]['lr']))
-            train(args, train_loader, model, criterion, optimizer, epoch,
+            train(args, model, device, train_loader, optimizer, epoch,
                   tb_writer)
-
-            prec1 = validate(args, val_loader, model, criterion, epoch,
-                             tb_writer)
-
+            prec1 = test(args, model, device, test_loader, epoch, tb_writer)
             is_best = prec1 > best_prec1
             best_prec1 = max(prec1, best_prec1)
 
@@ -323,6 +349,15 @@ def main():
                         args.save_dir,
                         'bayesian_{}_cifar.pth'.format(args.arch)))
 
+
+
+            if args.model == 'grid':
+                torch.save(model.state_dict(),
+                           args.save_dir + "/cifar_bayesian_resdgp_sg.pth")
+            elif args.model == 'additive':
+                torch.save(model.state_dict(),
+                           args.save_dir + "/cifar_bayesian_dgp_add.pth")
+
     elif args.mode == 'test':
         checkpoint_file = args.save_dir + '/bayesian_{}_cifar.pth'.format(
             args.arch)
@@ -332,247 +367,10 @@ def main():
             checkpoint = torch.load(checkpoint_file,
                                     map_location=torch.device('cpu'))
         model.load_state_dict(checkpoint['state_dict'])
-        evaluate(args, model, val_loader)
-
-
-def train(args,
-          train_loader,
-          model,
-          criterion,
-          optimizer,
-          epoch,
-          tb_writer=None):
-    batch_time = AverageMeter()
-    data_time = AverageMeter()
-    losses = AverageMeter()
-    top1 = AverageMeter()
-
-    # switch to train mode
-    model.train()
+        evaluate(args, model, device, test_loader, args.error_bar)
 
     end = time.time()
-    for i, (input, target) in enumerate(train_loader):
-
-        # measure data loading time
-        data_time.update(time.time() - end)
-
-        if torch.cuda.is_available():
-            target = target.cuda()
-            input_var = input.cuda()
-            target_var = target
-        else:
-            target = target.cpu()
-            input_var = input.cpu()
-            target_var = target
-
-        if args.half:
-            input_var = input_var.half()
-
-        # compute output
-        output_ = []
-        kl_ = []
-        for mc_run in range(args.num_mc):
-            output, kl = model(input_var)
-            output_.append(output)
-            kl_.append(kl)
-        output = torch.mean(torch.stack(output_), dim=0)
-        kl = torch.mean(torch.stack(kl_), dim=0)
-        cross_entropy_loss = criterion(output, target_var)
-        scaled_kl = kl / args.batch_size
-        #ELBO loss
-        loss = cross_entropy_loss + scaled_kl
-
-        # compute gradient and do SGD step
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-        output = output.float()
-        loss = loss.float()
-        # measure accuracy and record loss
-        prec1 = accuracy(output.data, target)[0]
-        losses.update(loss.item(), input.size(0))
-        top1.update(prec1.item(), input.size(0))
-
-        # measure elapsed time
-        batch_time.update(time.time() - end)
-        end = time.time()
-
-        if i % args.print_freq == 0:
-            print('Epoch: [{0}][{1}/{2}]\t'
-                  'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                  'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
-                  'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                  'Prec@1 {top1.val:.3f} ({top1.avg:.3f})'.format(
-                      epoch,
-                      i,
-                      len(train_loader),
-                      batch_time=batch_time,
-                      data_time=data_time,
-                      loss=losses,
-                      top1=top1))
-
-        if tb_writer is not None:
-            tb_writer.add_scalar('train/cross_entropy_loss',
-                                 cross_entropy_loss.item(), epoch)
-            tb_writer.add_scalar('train/kl_div', scaled_kl.item(), epoch)
-            tb_writer.add_scalar('train/elbo_loss', loss.item(), epoch)
-            tb_writer.add_scalar('train/accuracy', prec1.item(), epoch)
-            tb_writer.flush()
-
-
-def validate(args, val_loader, model, criterion, epoch, tb_writer=None):
-    batch_time = AverageMeter()
-    losses = AverageMeter()
-    top1 = AverageMeter()
-
-    # switch to evaluate mode
-    model.eval()
-
-    end = time.time()
-    with torch.no_grad():
-        for i, (input, target) in enumerate(val_loader):
-            if torch.cuda.is_available():
-                target = target.cuda()
-                input_var = input.cuda()
-                target_var = target.cuda()
-            else:
-                target = target.cpu()
-                input_var = input.cpu()
-                target_var = target.cpu()
-
-            if args.half:
-                input_var = input_var.half()
-
-            # compute output
-            output_ = []
-            kl_ = []
-            for mc_run in range(args.num_mc):
-                output, kl = model(input_var)
-                output_.append(output)
-                kl_.append(kl)
-            output = torch.mean(torch.stack(output_), dim=0)
-            kl = torch.mean(torch.stack(kl_), dim=0)
-            cross_entropy_loss = criterion(output, target_var)
-            scaled_kl = kl / args.batch_size
-            #ELBO loss
-            loss = cross_entropy_loss + scaled_kl
-
-            output = output.float()
-            loss = loss.float()
-
-            # measure accuracy and record loss
-            prec1 = accuracy(output.data, target)[0]
-            losses.update(loss.item(), input.size(0))
-            top1.update(prec1.item(), input.size(0))
-
-            # measure elapsed time
-            batch_time.update(time.time() - end)
-            end = time.time()
-
-            if i % args.print_freq == 0:
-                print('Test: [{0}/{1}]\t'
-                      'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                      'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                      'Prec@1 {top1.val:.3f} ({top1.avg:.3f})'.format(
-                          i,
-                          len(val_loader),
-                          batch_time=batch_time,
-                          loss=losses,
-                          top1=top1))
-
-            if tb_writer is not None:
-                tb_writer.add_scalar('val/cross_entropy_loss',
-                                     cross_entropy_loss.item(), epoch)
-                tb_writer.add_scalar('val/kl_div', scaled_kl.item(), epoch)
-                tb_writer.add_scalar('val/elbo_loss', loss.item(), epoch)
-                tb_writer.add_scalar('val/accuracy', prec1.item(), epoch)
-                tb_writer.flush()
-
-    print(' * Prec@1 {top1.avg:.3f}'.format(top1=top1))
-
-    return top1.avg
-
-
-def evaluate(args, model, val_loader):
-    pred_probs_mc = []
-    test_loss = 0
-    correct = 0
-    output_list = []
-    labels_list = []
-    model.eval()
-    with torch.no_grad():
-        begin = time.time()
-        for data, target in val_loader:
-            if torch.cuda.is_available():
-                data, target = data.cuda(), target.cuda()
-            else:
-                data, target = data.cpu(), target.cpu()
-            output_mc = []
-            for mc_run in range(args.num_monte_carlo):
-                output, _ = model.forward(data)
-                output_mc.append(output)
-            output_ = torch.stack(output_mc)
-            output_list.append(output_)
-            labels_list.append(target)
-        end = time.time()
-        print("inference throughput: ", len_testset / (end - begin),
-              " images/s")
-
-        output = torch.stack(output_list)
-        output = output.permute(1, 0, 2, 3)
-        output = output.contiguous().view(args.num_monte_carlo, len_testset,
-                                          -1)
-        output = torch.nn.functional.softmax(output, dim=2)
-        labels = torch.cat(labels_list)
-        pred_mean = output.mean(dim=0)
-        Y_pred = torch.argmax(pred_mean, axis=1)
-        print('Test accuracy:',
-              (Y_pred.data.cpu().numpy() == labels.data.cpu().numpy()).mean() *
-              100)
-        np.save('./probs_cifar_mc.npy', output.data.cpu().numpy())
-        np.save('./cifar_test_labels_mc.npy', labels.data.cpu().numpy())
-
-
-def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
-    """
-    Save the training model
-    """
-    torch.save(state, filename)
-
-
-class AverageMeter(object):
-    """Computes and stores the average and current value"""
-    def __init__(self):
-        self.reset()
-
-    def reset(self):
-        self.val = 0
-        self.avg = 0
-        self.sum = 0
-        self.count = 0
-
-    def update(self, val, n=1):
-        self.val = val
-        self.sum += val * n
-        self.count += n
-        self.avg = self.sum / self.count
-
-
-def accuracy(output, target, topk=(1, )):
-    """Computes the precision@k for the specified values of k"""
-    maxk = max(topk)
-    batch_size = target.size(0)
-
-    _, pred = output.topk(maxk, 1, True, True)
-    pred = pred.t()
-    correct = pred.eq(target.view(1, -1).expand_as(pred))
-
-    res = []
-    for k in topk:
-        correct_k = correct[:k].view(-1).float().sum(0)
-        res.append(correct_k.mul_(100.0 / batch_size))
-    return res
+    print("done. Total time: " + str(end - start))
 
 
 if __name__ == '__main__':

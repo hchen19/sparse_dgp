@@ -112,7 +112,7 @@ class AMGP(nn.Module):
 
         self.in_features = in_features
         self.kernel = kernel
-        self.minmax = MinMax()
+        self.rescale = MinMax()
 
         dyadic_design = design_class(dyadic_sort=True, return_neighbors=True)(deg=n_level, input_bd=input_bd)
         chol_inv = mk_chol_inv(dyadic_design=dyadic_design, markov_kernel=kernel, upper=True)  # [m, m] size tensor
@@ -133,8 +133,7 @@ class AMGP(nn.Module):
         :return: [n,m*d] size tensor, kernel(input, sparse_grid) @ chol_inv
         """
 
-        # x = self.minmax(x)
-        x = F.normalize(x)
+        x = self.rescale(x)
         x = torch.flatten(x, start_dim=1)  # flatten x of size [...,n,d] --> size [...,n*d]
         x = x.unsqueeze(dim=-1)  # add new dimension, x of size [...,n*d] --> size [...,n*d, 1]
         x = self.kernel(x, self.design_points)  # [...,n*d, m] size tenosr
