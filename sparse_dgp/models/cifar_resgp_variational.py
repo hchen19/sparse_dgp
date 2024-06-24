@@ -97,7 +97,7 @@ class BasicBlock(nn.Module):
                         posterior_rho_init=posterior_rho_init,
                         bias=False,
                         return_kl=False
-                    ), nn.LayerNorm(features)
+                    )
                 )
 
     def forward(self, x):
