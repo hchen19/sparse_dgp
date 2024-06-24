@@ -16,7 +16,7 @@ from sparse_dgp.utils.sparse_activation.design_class import HyperbolicCrossDesig
 from sparse_dgp.kernels.laplace_kernel import LaplaceProductKernel
 
 __all__ = [
-    'ResNet', 'resgp8', 'resgp20', 'resgp32', 'resgp44', 'resgp56'
+    'ResGP', 'resgp8', 'resgp20', 'resgp32', 'resgp44', 'resgp56'
 ]
 
 prior_mu = 0.0
@@ -96,8 +96,7 @@ class BasicBlock(nn.Module):
                         posterior_mu_init=posterior_mu_init,
                         posterior_rho_init=posterior_rho_init,
                         bias=False,
-                        return_kl=False
-                    )
+                        return_kl=False)
                 )
 
     def forward(self, x):
@@ -113,24 +112,24 @@ class BasicBlock(nn.Module):
         return out, kl_sum
 
 
-class ResNet(nn.Module):
+class ResGP(nn.Module):
     def __init__(self, input_dim, design_class, kernel, block, num_blocks, num_classes=10):
-        super(ResNet, self).__init__()
-        self.in_features = 64
+        super(ResGP, self).__init__()
+        self.in_features = 256
 
         self.fc0 = LinearReparameterization(
             in_features=input_dim,
-            out_features=64,
+            out_features=256,
             prior_mean=prior_mu,
             prior_variance=prior_sigma,
             posterior_mu_init=posterior_mu_init,
             posterior_rho_init=posterior_rho_init,
             bias=True,
         )
-        self.layer1 = self._make_layer(design_class, kernel, block, 64, num_blocks[0])
-        self.layer2 = self._make_layer(design_class, kernel, block, 64, num_blocks[1])
-        self.layer3 = self._make_layer(design_class, kernel, block, 32, num_blocks[2])
-        self.gp1 = AMGP(in_features=32, n_level=5, design_class=design_class, kernel=kernel)
+        self.layer1 = self._make_layer(design_class, kernel, block, 256, num_blocks[0])
+        self.layer2 = self._make_layer(design_class, kernel, block, 128, num_blocks[1])
+        self.layer3 = self._make_layer(design_class, kernel, block, 64, num_blocks[2])
+        self.gp1 = AMGP(in_features=64, n_level=5, design_class=design_class, kernel=kernel)
         self.fc1 = LinearReparameterization(
             in_features=self.gp1.out_features,
             out_features=num_classes,
@@ -150,7 +149,8 @@ class ResNet(nn.Module):
 
     def forward(self, x):
         kl_sum = 0
-        out = torch.flatten(x, 1)
+        out = x.view(x.size(0), -1)
+        # out = torch.flatten(x, 1)
         out, kl = self.fc0(out)
         kl_sum += kl
         for layer in self.layer1:
@@ -169,20 +169,20 @@ class ResNet(nn.Module):
 
 
 def resgp8(input_dim=3072, design_class=HyperbolicCrossDesign, kernel=LaplaceProductKernel(1.), num_classes=10):
-    return ResNet(input_dim, design_class, kernel, BasicBlock, [1, 1, 1], num_classes)
+    return ResGP(input_dim, design_class, kernel, BasicBlock, [1, 1, 1], num_classes)
 
 
 def resgp20(input_dim=3072, design_class=HyperbolicCrossDesign, kernel=LaplaceProductKernel(1.), num_classes=10):
-    return ResNet(input_dim, design_class, kernel, BasicBlock, [3, 3, 3], num_classes)
+    return ResGP(input_dim, design_class, kernel, BasicBlock, [3, 3, 3], num_classes)
 
 
 def resgp32(input_dim=3072, design_class=HyperbolicCrossDesign, kernel=LaplaceProductKernel(1.), num_classes=10):
-    return ResNet(input_dim, design_class, kernel, BasicBlock, [5, 5, 5], num_classes)
+    return ResGP(input_dim, design_class, kernel, BasicBlock, [5, 5, 5], num_classes)
 
 
 def resgp44(input_dim=3072, design_class=HyperbolicCrossDesign, kernel=LaplaceProductKernel(1.), num_classes=10):
-    return ResNet(input_dim, design_class, kernel, BasicBlock, [7, 7, 7], num_classes)
+    return ResGP(input_dim, design_class, kernel, BasicBlock, [7, 7, 7], num_classes)
 
 
 def resgp56(input_dim=3072, design_class=HyperbolicCrossDesign, kernel=LaplaceProductKernel(1.), num_classes=10):
-    return ResNet(input_dim, design_class, kernel, BasicBlock, [9, 9, 9], num_classes)
+    return ResGP(input_dim, design_class, kernel, BasicBlock, [9, 9, 9], num_classes)

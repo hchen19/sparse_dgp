@@ -49,7 +49,7 @@ parser.add_argument('-j',
                     metavar='N',
                     help='number of data loading workers (default: 8)')
 parser.add_argument('--epochs',
-                    default=200,
+                    default=20,
                     type=int,
                     metavar='N',
                     help='number of total epochs to run')
@@ -205,7 +205,8 @@ def main():
     if not os.path.exists(args.save_dir):
         os.makedirs(args.save_dir)
 
-    model = torch.nn.DataParallel(resgp.__dict__[args.arch]())
+    # model = torch.nn.DataParallel(resgp.__dict__[args.arch]())
+    model = resgp.__dict__[args.arch]()
     if torch.cuda.is_available():
         model.cuda()
     else:
