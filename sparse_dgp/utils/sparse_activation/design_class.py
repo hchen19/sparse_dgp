@@ -15,7 +15,7 @@ class HyperbolicCrossDesign:
         self.dyadic_sort = dyadic_sort
         self.return_neighbors = return_neighbors
     
-    def __call__(self, deg, input_bd = None):
+    def __call__(self, deg, input_lb=0, input_ub=1):
         """
         :param deg: degree of hyperbolic cross (# of points = 2^deg - 1)
         :type deg: int
@@ -26,11 +26,9 @@ class HyperbolicCrossDesign:
             [2^deg-1] size tensor with hyperbolic cross points (bisection)
         :rtype: torch.Tensor.float       
         """
-        if input_bd is None:
-            input_bd = [0,1]
     
-        x_1 = input_bd[0]
-        x_n = input_bd[1]
+        x_1 = input_lb
+        x_n = input_ub
 
         if self.dyadic_sort is False and self.return_neighbors is True:
             self.return_neighbors = False
@@ -104,26 +102,27 @@ class SparseGridDesign:
     """
 
     def __init__(self, d, eta=None, 
-                 input_bd=None, 
+                 input_lb=0,
+                 input_ub=1,
                  design_class=HyperbolicCrossDesign
                  ):
         self.d = d
         self.eta = eta
         self.design_class = design_class
-        self.input_bd = input_bd
+        self.input_lb = input_lb
+        self.input_ub = input_ub
+        # self.input_bd = torch.tensor([[input_lb,input_ub]]*d, dtype=torch.float32)
         if eta is None:
             eta = d + 2
-        if input_bd is None:
-            self.input_bd = [[0,1]]*d
-            #self.input_bd = torch.tensor([[0,1]]*d, dtype=torch.float32)
         if d >= eta:
             raise RuntimeError("level eta should be greater than dimension d")
     
-    def gen_sg(self,dyadic_sort=True, return_neighbors=True):
+    def gen_sg(self, dyadic_sort=True, return_neighbors=True):
         d = self.d
         eta = self.eta
         design_class = self.design_class
-        input_bd = self.input_bd
+        input_lb = self.input_lb
+        input_ub = self.input_ub
 
         # initialize
         x_tot = torch.empty(1,d)
@@ -155,7 +154,7 @@ class SparseGridDesign:
                 
                 for dim in range(d): # loop over dimension
                     design_fun = design_class(dyadic_sort=dyadic_sort, return_neighbors=return_neighbors)
-                    design_str = design_fun( t_arrows[prt,dim], input_bd[dim])
+                    design_str = design_fun(t_arrows[prt,dim], input_lb, input_ub)
                     design_str_fg[dim] = design_str
                     x_fg[dim] = design_str.points
                     indices_fg[dim] = (2**(eta-d+1) * design_str.points - 1).to(dtype=int)

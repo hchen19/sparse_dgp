@@ -16,7 +16,7 @@ from torch.utils.tensorboard import SummaryWriter
 import numpy as np
 import matplotlib.pyplot as plt
 
-import sparse_dgp.models.simple_dgp_add_variational as simple_dtmgp
+import sparse_dgp.models.simple_dgp_variational as simple_dtmgp
 from sparse_dgp.utils.sparse_activation.design_class import HyperbolicCrossDesign
 from sparse_dgp.kernels.laplace_kernel import LaplaceProductKernel
 from dataset.dataset import Dataset
@@ -53,7 +53,7 @@ class DTMGP:
 
         self.activation = activation
 
-        self.model = simple_dtmgp.SDTMGPadd(input_dim, output_dim, design_class, kernel).to(self.device)
+        self.model = simple_dtmgp.SDGPadditive(input_dim, output_dim, design_class, kernel).to(self.device)
         self.reset_optimizer_scheduler() # do not delete this
 
     def reset_optimizer_scheduler(self,):

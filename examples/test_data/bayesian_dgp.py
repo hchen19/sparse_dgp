@@ -1,8 +1,12 @@
 from __future__ import print_function
 import os
+import sys
+from pathlib import Path  # if you haven't already done so
+file = Path(os.path.dirname(os.path.abspath(__file__))).resolve()
+parent, root = file.parent, file.parents[1]
+sys.path.append(str(root))
 import time
 import argparse
-
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
@@ -10,15 +14,13 @@ from torch.optim.lr_scheduler import StepLR, CosineAnnealingLR
 from torch.utils.tensorboard import SummaryWriter
 import numpy as np
 import matplotlib.pyplot as plt
-
-import sparse_dgp.models.simple_dgp_sg_variational as simple_dtmgp
+import sparse_dgp.models.simple_dgp_variational as simple_dgp
 from sparse_dgp.utils.sparse_activation.design_class import HyperbolicCrossDesign
 from sparse_dgp.kernels.laplace_kernel import LaplaceProductKernel
 from dataset.dataset import Dataset
 
 
-
-class DTMGP:
+class DGP:
     def __init__(self, input_dim, output_dim, 
                  design_class, kernel,
                  num_mc=1, num_monte_carlo=10, batch_size=128,
@@ -28,6 +30,7 @@ class DTMGP:
                  inverse_y=False, 
                  seed=1, 
                  use_cuda=True,
+                 option='grid',
                  ):
         
         if torch.cuda.is_available() and use_cuda:
@@ -49,7 +52,11 @@ class DTMGP:
 
         self.activation = activation
 
-        self.model = simple_dtmgp.SDTMGPsg(input_dim, output_dim, design_class, kernel).to(self.device)
+        if option == 'grid':
+            self.model = simple_dgp.SDGPgrid(input_dim, output_dim, design_class, kernel).to(self.device)
+        else:
+            self.model = simple_dgp.SDGPadditive(input_dim, output_dim, design_class, kernel).to(self.device)
+
         self.reset_optimizer_scheduler() # do not delete this
 
     def reset_optimizer_scheduler(self,):
@@ -147,6 +154,10 @@ def main():
     dir_name = os.path.abspath(os.path.dirname(__file__))
     # Training settings
     parser = argparse.ArgumentParser(description='PyTorch simple DTMGP Example')
+    parser.add_argument('--model',
+                        type=str,
+                        default='grid',
+                        help='additive | grid')
     parser.add_argument('--inputdim',
                         type=int,
                         default=7,
@@ -225,7 +236,6 @@ def main():
 
     dataset_path = os.path.join(dir_name, "dataset/dataset.pkl")
     inputs, outputs = import_data(dataset_path)
-    #inputs, outputs = import_data("./dataset/dataset.pkl")
 
     inputs = inputs.astype(np.float32)
     outputs = np.squeeze(-outputs).astype(np.float32)
@@ -237,11 +247,11 @@ def main():
         os.makedirs(args.save_dir)
 
     ############################################################################################################
-    bnn = DTMGP(input_dim=inputs.shape[-1], output_dim=1,
-                design_class=HyperbolicCrossDesign,
-                kernel=LaplaceProductKernel(lengthscale=1.),
-                batch_size=args.batch_size, lr=args.lr, gamma=args.gamma, 
-                use_cuda=True)
+    bnn = DGP(input_dim=inputs.shape[-1], output_dim=1,
+              design_class=HyperbolicCrossDesign,
+              kernel=LaplaceProductKernel(lengthscale=1.),
+              batch_size=args.batch_size, lr=args.lr, gamma=args.gamma,
+              use_cuda=True, option=args.model)
 
     print(args.mode)
     start = time.time()
@@ -254,15 +264,24 @@ def main():
             bnn.test(test_loader)
             losses += loss
             if epoch % 10 == 0:
-                torch.save(bnn.model.state_dict(), args.save_dir + "/simple_dtmgp_sg_bayesian_fc.pth")
+                if args.model == 'grid':
+                    torch.save(bnn.model.state_dict(), args.save_dir + "/simple_dgp_bayesian_grid.pth")
+                elif args.model == 'additive':
+                    torch.save(bnn.model.state_dict(), args.save_dir + "/simple_dgp_bayesian_additive.pth")
 
         plt.plot(losses)
         plt.ylim(0, 10)
-        savefigure_path = os.path.join(dir_name, "figures/result_dtmgp_sg_training_test.png")
+        if args.model == 'grid':
+            savefigure_path = os.path.join(dir_name, "figures/result_dgp_training_grid.png")
+        else:
+            savefigure_path = os.path.join(dir_name, "figures/result_dgp_training_additive.png")
         plt.savefig(savefigure_path, format = 'png', dpi=300)
 
     elif args.mode == 'test':
-        checkpoint = args.save_dir + '/simple_dtmgp_sg_bayesian_fc.pth'
+        if args.model == 'grid':
+            checkpoint = args.save_dir + '/simple_dgp_bayesian_grid.pth'
+        else:
+            checkpoint = args.save_dir + '/simple_dgp_bayesian_additive.pth'
         bnn.model.load_state_dict(torch.load(checkpoint))
         bnn.evaluate(train_loader)
         bnn.evaluate(test_loader)

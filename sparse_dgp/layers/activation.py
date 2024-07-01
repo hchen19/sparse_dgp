@@ -38,22 +38,24 @@ class TMGP(nn.Module):
     def __init__(self,
                  in_features,
                  n_level=2,
-                 input_bd=None,
+                 input_lb=-2,
+                 input_ub=2,
                  design_class=HyperbolicCrossDesign,
                  kernel=LaplaceProductKernel(lengthscale=1.),
                  ):
         super().__init__()
 
         self.kernel = kernel
-        self.minmax = MinMax()
+        # self.ln1 = MinMax()
+        self.ln1 = nn.LayerNorm(in_features)
 
         if in_features == 1:  # one-dimension TMGP
-            dyadic_design = design_class(dyadic_sort=True, return_neighbors=True)(deg=n_level, input_bd=input_bd)
+            dyadic_design = design_class(dyadic_sort=True, return_neighbors=True)(deg=n_level, input_lb=input_lb, input_ub=input_ub)
             chol_inv = mk_chol_inv(dyadic_design=dyadic_design, markov_kernel=kernel, upper=True)
             design_points = dyadic_design.points.reshape(-1, 1)
         else:  # multi-dimension TMGP
             eta = int(in_features + n_level)
-            sg = SparseGridDesign(in_features, eta, input_bd=input_bd, design_class=design_class).gen_sg(
+            sg = SparseGridDesign(in_features, eta, input_lb=input_lb, input_ub=input_ub, design_class=design_class).gen_sg(
                 dyadic_sort=True, return_neighbors=True)
             chol_inv = tmk_chol_inv(sparse_grid_design=sg, tensor_markov_kernel=kernel, upper=True)
             design_points = sg.pts_set
@@ -72,9 +74,9 @@ class TMGP(nn.Module):
 
         :return: [n,m] size tensor, kernel(input, sparse_grid) @ chol_inv
         """
-        x = self.minmax(x)
-        x = self.kernel(x, self.design_points)  # [n, m] size tenosr
-        out = x @ self.chol_inv  # [n, m] size tensor
+        out = self.ln1(x)
+        out = self.kernel(out, self.design_points)  # [n, m] size tenosr
+        out = out @ self.chol_inv  # [n, m] size tensor
 
         return out
 
@@ -104,17 +106,18 @@ class AMGP(nn.Module):
     def __init__(self,
                  in_features,
                  n_level,
-                 input_bd=None,
+                 input_lb=-2,
+                 input_ub=2,
                  design_class=HyperbolicCrossDesign,
                  kernel=LaplaceProductKernel(lengthscale=1.),
                  ):
         super().__init__()
 
-        self.in_features = in_features
         self.kernel = kernel
-        self.rescale = MinMax()
+        # self.ln1 = MinMax()
+        self.ln1 = nn.LayerNorm(in_features)
 
-        dyadic_design = design_class(dyadic_sort=True, return_neighbors=True)(deg=n_level, input_bd=input_bd)
+        dyadic_design = design_class(dyadic_sort=True, return_neighbors=True)(deg=n_level, input_lb=input_lb, input_ub=input_ub)
         chol_inv = mk_chol_inv(dyadic_design=dyadic_design, markov_kernel=kernel, upper=True)  # [m, m] size tensor
         design_points = dyadic_design.points.reshape(-1, 1)  # [m, 1] size tensor
 
@@ -133,11 +136,11 @@ class AMGP(nn.Module):
         :return: [n,m*d] size tensor, kernel(input, sparse_grid) @ chol_inv
         """
 
-        x = self.rescale(x)
-        x = torch.flatten(x, start_dim=1)  # flatten x of size [...,n,d] --> size [...,n*d]
-        x = x.unsqueeze(dim=-1)  # add new dimension, x of size [...,n*d] --> size [...,n*d, 1]
-        x = self.kernel(x, self.design_points)  # [...,n*d, m] size tenosr
-        x = torch.matmul(x, self.chol_inv)  # [..., n*d, m] size tensor
-        out = torch.flatten(x, start_dim=1)
+        out = self.ln1(x)
+        out = torch.flatten(out, start_dim=1)  # flatten x of size [...,n,d] --> size [...,n*d]
+        out = out.unsqueeze(dim=-1)  # add new dimension, x of size [...,n*d] --> size [...,n*d, 1]
+        out = self.kernel(out, self.design_points)  # [...,n*d, m] size tenosr
+        out = torch.matmul(out, self.chol_inv)  # [..., n*d, m] size tensor
+        out = torch.flatten(out, start_dim=1)
 
         return out

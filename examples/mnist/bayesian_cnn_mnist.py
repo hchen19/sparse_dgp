@@ -2,13 +2,11 @@ from __future__ import print_function
 import os
 import sys
 from pathlib import Path  # if you haven't already done so
-
 file = Path(os.path.dirname(os.path.abspath(__file__))).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 import time
 import argparse
-
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
@@ -16,10 +14,9 @@ from torchvision import datasets, transforms
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader, Subset, SubsetRandomSampler
-
 import numpy as np
 import matplotlib.pyplot as plt
-import sparse_dgp.models.mnist_cnn_variational as simple_cnn
+import sparse_dgp.models.simple_cnn_variational as simple_cnn
 
 len_trainset = 60000
 len_testset = 10000
